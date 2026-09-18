@@ -189,6 +189,7 @@ public struct MainControlView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .focusable(false)
                     .contentShape(Rectangle())
                     .onHover { hovering in
                         hoveredTab = hovering ? tab : nil
