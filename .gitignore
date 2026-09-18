@@ -1,0 +1,28 @@
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+
+# Xcode & Apple Build Artifacts
+build/
+DerivedData/
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Local Environment & Secrets
+*.env
+*.env.local
+.vscode/
+.idea/
