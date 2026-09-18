@@ -22,6 +22,32 @@
 
 ---
 
+## Feature Previews
+
+### Precision Capture & Tactile Pinning
+
+<p align="center">
+  <a href="docs/videos/capture_and_pin.mp4">
+    <img src="docs/videos/capture_and_pin.gif" alt="Precision Capture & Tactile Pinning Preview" width="100%" />
+  </a>
+</p>
+<p align="center">
+  <sub>Click preview above to view or download full HD MP4 (36s)</sub>
+</p>
+
+### Safari-Style In-Place Screen Translation
+
+<p align="center">
+  <a href="docs/videos/inplace_translation.mp4">
+    <img src="docs/videos/inplace_translation.gif" alt="Safari-Style In-Place Screen Translation Preview" width="100%" />
+  </a>
+</p>
+<p align="center">
+  <sub>Click preview above to view or download full HD MP4 (20s)</sub>
+</p>
+
+---
+
 ## Overview
 
 **SnipSnap** is designed from the ground up for macOS using Apple native frameworks: **Swift, AppKit, SwiftUI, Vision, and the Translation framework**.

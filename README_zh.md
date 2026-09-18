@@ -22,6 +22,32 @@
 
 ---
 
+## 核心功能预览
+
+### 精准取景与极致贴图
+
+<p align="center">
+  <a href="docs/videos/capture_and_pin.mp4">
+    <img src="docs/videos/capture_and_pin.gif" alt="精准取景与极致贴图演示" width="100%" />
+  </a>
+</p>
+<p align="center">
+  <sub>点击动图可在线播放或下载完整高清 MP4 视频 (36s)</sub>
+</p>
+
+### Safari 风格原地屏幕翻译
+
+<p align="center">
+  <a href="docs/videos/inplace_translation.mp4">
+    <img src="docs/videos/inplace_translation.gif" alt="Safari 风格原地屏幕翻译演示" width="100%" />
+  </a>
+</p>
+<p align="center">
+  <sub>点击动图可在线播放或下载完整高清 MP4 视频 (20s)</sub>
+</p>
+
+---
+
 ## 项目简介
 
 **SnipSnap** 专为追求极致性能与设计质感的 macOS 深度用户、开发者与设计师打造，底层完全采用苹果官方原生技术栈开发（**Swift、AppKit、SwiftUI、Apple Vision 与 Apple Translation 框架**）。
