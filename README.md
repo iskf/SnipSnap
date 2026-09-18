@@ -209,7 +209,7 @@ brew upgrade --cask snipsnap
 
 ### 2. Manual Download (DMG)
 
-1. Download the latest `SnipSnap-1.0.0.dmg` from [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest).
+1. Download the latest `SnipSnap-1.0.1.dmg` from [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest).
 2. Open the DMG image and drag `SnipSnap.app` into your `/Applications` folder.
 3. Launch SnipSnap from Launchpad or Spotlight.
 
