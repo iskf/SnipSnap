@@ -21,6 +21,9 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
     
     private var recordingTimer: Timer?
     private var elapsedSeconds: Int = 0
+    private var activeStartTime: Double = 0.0
+    private var accumulatedPausedDuration: Double = 0.0
+    private var pauseStartTime: Double = 0.0
     private var isPaused: Bool = false
     private var isEncoding: Bool = false
     
@@ -42,6 +45,9 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
         
         self.countdownRemaining = 3
         self.elapsedSeconds = 0
+        self.activeStartTime = 0.0
+        self.accumulatedPausedDuration = 0.0
+        self.pauseStartTime = 0.0
         self.isPaused = false
         self.isEncoding = false
         
@@ -56,24 +62,44 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
         bWin.backgroundColor = .clear
         bWin.hasShadow = false
         bWin.level = .floating
+        bWin.sharingType = .none // CRITICAL: 100% invisible to ScreenCaptureKit & screen recordings!
         bWin.ignoresMouseEvents = true // CRITICAL: Complete mouse freedom!
         
         let bView = RecordingBorderView(frame: NSRect(origin: .zero, size: screenRect.size))
-        bView.countdownNumber = 3
         bWin.contentView = bView
         bWin.orderFrontRegardless()
         self.borderWindow = bWin
         self.borderView = bView
         
-        // 2. Create Floating Control Capsule Window
-        let capsuleWidth: CGFloat = 268.0
-        let capsuleHeight: CGFloat = 38.0
-        let capsuleX = round(screenRect.midX - capsuleWidth / 2.0)
-        var capsuleY = round(screenRect.minY - capsuleHeight - 12.0)
+        // 2. Create Floating Control Capsule Window (matches AnnotationToolbar positioning)
+        let capsuleHeight: CGFloat = RecordingControlCapsuleView.standardHeight // 38px
         
-        // If too low, place above the recording rect
+        // Create view first to measure intrinsic width
+        let cView = RecordingControlCapsuleView(frame: NSRect(x: 0, y: 0, width: 300, height: capsuleHeight))
+        cView.onPauseToggled = { [weak self] in self?.togglePause() }
+        cView.onFinishClicked = { [weak self] in self?.finishSession() }
+        cView.onCancelClicked = { [weak self] in self?.cancelSession() }
+        cView.updateState(.countdown(remaining: 3))
+        cView.layoutSubtreeIfNeeded()
+        
+        // Auto-sizing: let the stack view determine the natural width
+        let capsuleWidth = max(200, cView.fittingSize.width + 12)
+        
+        // Right-aligned to selection rect (matches annotation toolbar positioning)
+        let capsuleX = round(min(max(screenRect.maxX - capsuleWidth, screen.frame.minX + 10),
+                                  screen.frame.maxX - capsuleWidth - 10))
+        
+        // Below selection with 8px gap (consistent with annotation toolbar)
+        var capsuleY = round(screenRect.minY - capsuleHeight - 8.0)
+        
+        // If too low, flip above the selection rect
         if capsuleY < (screen.frame.minY + 15) {
-            capsuleY = round(screenRect.maxY + 12.0)
+            capsuleY = round(screenRect.maxY + 8.0)
+        }
+        
+        // If above screen top, clamp inside
+        if capsuleY + capsuleHeight > screen.frame.maxY - 10 {
+            capsuleY = round(screenRect.maxY - capsuleHeight - 8.0)
         }
         
         let cRect = NSRect(x: capsuleX, y: capsuleY, width: capsuleWidth, height: capsuleHeight)
@@ -85,15 +111,11 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
         )
         cWin.isOpaque = false
         cWin.backgroundColor = .clear
-        cWin.hasShadow = true
+        cWin.hasShadow = true // Window-level shadow (CALayer shadow removed to fix rectangular artifact)
         cWin.level = .floating
+        cWin.sharingType = .none // CRITICAL: 100% invisible to ScreenCaptureKit & screen recordings!
         
-        let cView = RecordingControlCapsuleView(frame: NSRect(origin: .zero, size: cRect.size))
-        cView.onPauseToggled = { [weak self] in self?.togglePause() }
-        cView.onFinishClicked = { [weak self] in self?.finishSession() }
-        cView.onCancelClicked = { [weak self] in self?.cancelSession() }
-        cView.updateState(.countdown(remaining: 3))
-        
+        cView.frame = NSRect(origin: .zero, size: cRect.size)
         cWin.contentView = cView
         cWin.orderFrontRegardless()
         self.controlWindow = cWin
@@ -101,12 +123,21 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
         
         setupShortcuts()
         
-        // 3. Start 3-2-1 Countdown Timer
+        // 3. Pre-warm ScreenCaptureKit live capture during 3-2-1 countdown
+        // Eliminates 1-2s async startup delay so t=0 is 100% captured
+        let borderWinNum = bWin.windowNumber
+        let controlWinNum = cWin.windowNumber
+        ScreenGIFRecorder.shared.prepareRecording(
+            targetScreen: screen,
+            localSelectionRect: localRect,
+            excludingWindowNumbers: [borderWinNum, controlWinNum]
+        )
+        
+        // 4. Start 3-2-1 Countdown Timer (displayed in capsule toolbar)
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] t in
             guard let self = self else { return }
             self.countdownRemaining -= 1
             if self.countdownRemaining > 0 {
-                self.borderView?.countdownNumber = self.countdownRemaining
                 self.capsuleView?.updateState(.countdown(remaining: self.countdownRemaining))
             } else {
                 t.invalidate()
@@ -117,31 +148,29 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
     }
     
     private func beginActiveRecording() {
-        guard let screen = sessionScreen else { return }
+        guard sessionScreen != nil else { return }
         
-        // Hide countdown number on border
-        borderView?.countdownNumber = nil
-        
-        let borderWinNum = borderWindow?.windowNumber ?? 0
-        let controlWinNum = controlWindow?.windowNumber ?? 0
-        
-        // Start ScreenCaptureKit live capture
-        ScreenGIFRecorder.shared.startRecording(
-            targetScreen: screen,
-            localSelectionRect: localRect,
-            excludingWindowNumbers: [borderWinNum, controlWinNum]
-        )
+        // Instant active capture from pre-warmed stream (0ms startup latency!)
+        ScreenGIFRecorder.shared.startActiveRecording()
         
         let maxDuration = AppConfig.load().gifMaxDuration
+        activeStartTime = CACurrentMediaTime()
+        accumulatedPausedDuration = 0.0
+        pauseStartTime = 0.0
+        elapsedSeconds = 0
         capsuleView?.updateState(.recording(elapsed: 0, maxDuration: maxDuration))
         
-        // Start live elapsed timer
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        // High-precision sub-second timer to avoid drift
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
             guard let self = self, !self.isPaused, !self.isEncoding else { return }
-            self.elapsedSeconds += 1
-            self.capsuleView?.updateState(.recording(elapsed: self.elapsedSeconds, maxDuration: maxDuration))
+            let activeNow = CACurrentMediaTime() - self.activeStartTime - self.accumulatedPausedDuration
+            let currentSec = max(0, Int(activeNow))
+            if currentSec != self.elapsedSeconds {
+                self.elapsedSeconds = currentSec
+                self.capsuleView?.updateState(.recording(elapsed: self.elapsedSeconds, maxDuration: maxDuration))
+            }
             
-            if self.elapsedSeconds >= maxDuration {
+            if currentSec >= maxDuration {
                 self.finishSession()
             }
         }
@@ -154,10 +183,16 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
         isPaused.toggle()
         let maxDuration = AppConfig.load().gifMaxDuration
         if isPaused {
+            pauseStartTime = CACurrentMediaTime()
             ScreenGIFRecorder.shared.pauseRecording()
             borderView?.isDashed = true
             capsuleView?.updateState(.paused(elapsed: elapsedSeconds, maxDuration: maxDuration))
         } else {
+            let pauseDuration = CACurrentMediaTime() - pauseStartTime
+            if pauseDuration > 0 {
+                accumulatedPausedDuration += pauseDuration
+            }
+            pauseStartTime = 0.0
             ScreenGIFRecorder.shared.resumeRecording()
             borderView?.isDashed = false
             capsuleView?.updateState(.recording(elapsed: elapsedSeconds, maxDuration: maxDuration))
@@ -186,8 +221,15 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 if let data = gifData {
-                    let mb = Double(data.count) / (1024.0 * 1024.0)
-                    let sizeStr = String(format: "%.1f MB", mb)
+                    let bytes = data.count
+                    let sizeStr: String
+                    if bytes < 1024 * 1024 {
+                        let kb = max(1, bytes / 1024)
+                        sizeStr = "\(kb) KB"
+                    } else {
+                        let mb = Double(bytes) / (1024.0 * 1024.0)
+                        sizeStr = String(format: "%.1f MB", mb)
+                    }
                     self.capsuleView?.updateState(.completed(sizeString: sizeStr))
                     
                     // Auto-fade out after 1.5 seconds
@@ -271,12 +313,9 @@ public class GIFRecordingSession: NSObject, @unchecked Sendable {
     }
 }
 
-// MARK: - 1. Red Border View (With Optional 3-2-1 Countdown Overlay)
+// MARK: - 1. Red Border View (Glowing outline, dashed when paused)
 
 class RecordingBorderView: NSView {
-    var countdownNumber: Int? = nil {
-        didSet { needsDisplay = true }
-    }
     var isDashed: Bool = false {
         didSet { needsDisplay = true }
     }
@@ -287,7 +326,7 @@ class RecordingBorderView: NSView {
         
         let borderRect = bounds.insetBy(dx: 1.5, dy: 1.5)
         
-        // 1. Glowing red border
+        // Glowing red border
         context.saveGState()
         context.setShadow(offset: .zero, blur: 6.0, color: NSColor.systemRed.withAlphaComponent(0.85).cgColor)
         context.setStrokeColor(NSColor.systemRed.cgColor)
@@ -298,41 +337,6 @@ class RecordingBorderView: NSView {
         }
         context.stroke(borderRect)
         context.restoreGState()
-        
-        // 2. Countdown 3-2-1 centered disc
-        if let num = countdownNumber, num > 0 {
-            let discSize: CGFloat = 80.0
-            let discRect = NSRect(
-                x: round(bounds.midX - discSize / 2.0),
-                y: round(bounds.midY - discSize / 2.0),
-                width: discSize,
-                height: discSize
-            )
-            
-            context.saveGState()
-            context.setFillColor(NSColor(calibratedWhite: 0.1, alpha: 0.85).cgColor)
-            let path = NSBezierPath(ovalIn: discRect)
-            path.fill()
-            
-            context.setStrokeColor(NSColor.white.withAlphaComponent(0.3).cgColor)
-            context.setLineWidth(1.5)
-            let strokePath = NSBezierPath(ovalIn: discRect)
-            strokePath.stroke()
-            
-            let numStr = "\(num)"
-            let font = NSFont.systemFont(ofSize: 44, weight: .bold)
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: NSColor.white
-            ]
-            let size = (numStr as NSString).size(withAttributes: attrs)
-            let textPoint = NSPoint(
-                x: discRect.midX - size.width / 2.0,
-                y: discRect.midY - size.height / 2.0 + 1.0
-            )
-            (numStr as NSString).draw(at: textPoint, withAttributes: attrs)
-            context.restoreGState()
-        }
     }
 }
 
@@ -346,29 +350,38 @@ enum RecordingCapsuleState {
     case completed(sizeString: String)
 }
 
-class RecordingControlCapsuleView: NSVisualEffectView {
+class RecordingControlCapsuleView: NSView {
     var onPauseToggled: (() -> Void)?
     var onFinishClicked: (() -> Void)?
     var onCancelClicked: (() -> Void)?
     
+    private var initialMouseLocation: NSPoint?
+    
+    // Grip handle: 2x3 dot pattern (matches GripDragHandleView)
+    private let gripView = NSView()
+    private var isGripHovered: Bool = false
+    private var gripTrackingArea: NSTrackingArea?
+    
     private let statusDot = NSView()
     private let timeLabel = NSTextField(labelWithString: "")
-    private let divider = NSView()
+    private let divider1 = RecordingControlCapsuleView.makeToolbarDivider()
     private let pauseButton = NSButton()
     private let finishButton = NSButton()
     private let cancelButton = NSButton()
     private let spinner = NSProgressIndicator()
     
+    // Consistent sizing with AnnotationToolbarView
+    static let standardHeight: CGFloat = 38.0
+    
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        material = .hudWindow
-        blendingMode = .withinWindow
-        state = .active
         wantsLayer = true
-        layer?.cornerRadius = 19
-        layer?.masksToBounds = true
-        layer?.borderColor = NSColor.white.withAlphaComponent(0.20).cgColor
-        layer?.borderWidth = 0.8
+        
+        // Background + border are drawn in draw() to avoid rectangular layer artifact.
+        // (layer?.backgroundColor leaks outside cornerRadius when masksToBounds = false)
+        layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.cornerRadius = 10
+        layer?.masksToBounds = false
         
         setupViews()
     }
@@ -377,101 +390,199 @@ class RecordingControlCapsuleView: NSVisualEffectView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: - Drag to Move (grip area)
+    
+    override func mouseDown(with event: NSEvent) {
+        initialMouseLocation = NSEvent.mouseLocation
+        NSCursor.closedHand.set()
+    }
+    
+    override func mouseDragged(with event: NSEvent) {
+        guard let initial = initialMouseLocation, let window = self.window else { return }
+        let current = NSEvent.mouseLocation
+        let dx = current.x - initial.x
+        let dy = current.y - initial.y
+        var frame = window.frame
+        frame.origin.x += dx
+        frame.origin.y += dy
+        window.setFrameOrigin(frame.origin)
+        initialMouseLocation = current
+    }
+    
+    override func mouseUp(with event: NSEvent) {
+        initialMouseLocation = nil
+        NSCursor.openHand.set()
+    }
+    
+    // MARK: - Layout Setup
+    
     private func setupViews() {
-        // Red Pulsing Status Dot
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.alignment = .centerY
+        stack.spacing = 2.5
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stack)
+        
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
+            stack.centerYAnchor.constraint(equalTo: centerYAnchor)
+        ])
+        
+        // 1. Grip Handle (2x3 dot pattern, same as GripDragHandleView)
+        gripView.wantsLayer = true
+        gripView.translatesAutoresizingMaskIntoConstraints = false
+        stack.addArrangedSubview(gripView)
+        NSLayoutConstraint.activate([
+            gripView.widthAnchor.constraint(equalToConstant: 14),
+            gripView.heightAnchor.constraint(equalToConstant: 26)
+        ])
+        
+        // Divider after grip
+        stack.addArrangedSubview(Self.makeToolbarDivider())
+        
+        // 2. Status Dot
         statusDot.wantsLayer = true
-        statusDot.layer?.cornerRadius = 4.5
+        statusDot.layer?.cornerRadius = 4.0
         statusDot.layer?.backgroundColor = NSColor.systemRed.cgColor
         statusDot.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(statusDot)
+        stack.addArrangedSubview(statusDot)
+        NSLayoutConstraint.activate([
+            statusDot.widthAnchor.constraint(equalToConstant: 8),
+            statusDot.heightAnchor.constraint(equalToConstant: 8)
+        ])
         
-        // Time / Status Label
-        timeLabel.font = NSFont.monospacedDigitSystemFont(ofSize: 12.5, weight: .bold)
-        timeLabel.textColor = .white
+        // 3. Time / Status Label
+        timeLabel.font = NSFont.monospacedDigitSystemFont(ofSize: 11.5, weight: .semibold)
+        timeLabel.textColor = NSColor.white.withAlphaComponent(0.85)
         timeLabel.alignment = .left
         timeLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(timeLabel)
+        stack.addArrangedSubview(timeLabel)
         
-        // Divider
-        divider.wantsLayer = true
-        divider.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.25).cgColor
-        divider.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(divider)
+        // 4. Divider before buttons
+        stack.addArrangedSubview(divider1)
         
-        // Pause Button
-        setupButton(pauseButton, icon: "pause.fill", action: #selector(btnPauseClicked))
-        pauseButton.toolTip = "暂停/继续"
+        // 5. Action Buttons (ToolbarIconButton-style: 24x24, cornerRadius 5)
+        setupToolbarButton(pauseButton, icon: "pause.fill", action: #selector(btnPauseClicked))
+        setupToolbarButton(finishButton, icon: "checkmark", tint: NSColor.systemGreen, action: #selector(btnFinishClicked))
+        setupToolbarButton(cancelButton, icon: "xmark", action: #selector(btnCancelClicked))
         
-        // Finish Button
-        setupButton(finishButton, icon: "checkmark.circle.fill", tint: NSColor.systemGreen, action: #selector(btnFinishClicked))
-        finishButton.toolTip = "完成并复制 (Enter)"
+        stack.addArrangedSubview(pauseButton)
+        stack.addArrangedSubview(finishButton)
+        stack.addArrangedSubview(cancelButton)
         
-        // Cancel Button
-        setupButton(cancelButton, icon: "xmark.circle.fill", tint: NSColor.white.withAlphaComponent(0.7), action: #selector(btnCancelClicked))
-        cancelButton.toolTip = "取消录制 (Esc)"
-        
-        // Spinner (for encoding)
+        // 6. Spinner (for encoding)
         spinner.style = .spinning
         spinner.controlSize = .small
         spinner.translatesAutoresizingMaskIntoConstraints = false
         spinner.isHidden = true
         addSubview(spinner)
-        
         NSLayoutConstraint.activate([
-            statusDot.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
-            statusDot.centerYAnchor.constraint(equalTo: centerYAnchor),
-            statusDot.widthAnchor.constraint(equalToConstant: 9),
-            statusDot.heightAnchor.constraint(equalToConstant: 9),
-            
-            timeLabel.leadingAnchor.constraint(equalTo: statusDot.trailingAnchor, constant: 8),
-            timeLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
-            
-            divider.leadingAnchor.constraint(equalTo: timeLabel.trailingAnchor, constant: 10),
-            divider.centerYAnchor.constraint(equalTo: centerYAnchor),
-            divider.widthAnchor.constraint(equalToConstant: 1),
-            divider.heightAnchor.constraint(equalToConstant: 16),
-            
-            pauseButton.leadingAnchor.constraint(equalTo: divider.trailingAnchor, constant: 8),
-            pauseButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            pauseButton.widthAnchor.constraint(equalToConstant: 24),
-            pauseButton.heightAnchor.constraint(equalToConstant: 24),
-            
-            finishButton.leadingAnchor.constraint(equalTo: pauseButton.trailingAnchor, constant: 6),
-            finishButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            finishButton.widthAnchor.constraint(equalToConstant: 24),
-            finishButton.heightAnchor.constraint(equalToConstant: 24),
-            
-            cancelButton.leadingAnchor.constraint(equalTo: finishButton.trailingAnchor, constant: 6),
-            cancelButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
-            cancelButton.centerYAnchor.constraint(equalTo: centerYAnchor),
-            cancelButton.widthAnchor.constraint(equalToConstant: 24),
-            cancelButton.heightAnchor.constraint(equalToConstant: 24),
-            
-            spinner.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
+            spinner.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
             spinner.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
     }
     
-    private func setupButton(_ btn: NSButton, icon: String, tint: NSColor = .white, action: Selector) {
+    /// ToolbarIconButton-matching style: 24x24, cornerRadius 5, SF Symbol 12.5pt medium
+    private func setupToolbarButton(_ btn: NSButton, icon: String, tint: NSColor = NSColor.white.withAlphaComponent(0.85), action: Selector) {
         btn.bezelStyle = .regularSquare
         btn.isBordered = false
         btn.imagePosition = .imageOnly
-        let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
+        btn.wantsLayer = true
+        btn.layer?.cornerRadius = 5
+        btn.layer?.masksToBounds = false
+        btn.layer?.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        
+        let config = NSImage.SymbolConfiguration(pointSize: 12.5, weight: .medium)
         btn.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?.withSymbolConfiguration(config)
         btn.contentTintColor = tint
         btn.target = self
         btn.action = action
         btn.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(btn)
+        
+        NSLayoutConstraint.activate([
+            btn.widthAnchor.constraint(equalToConstant: 24),
+            btn.heightAnchor.constraint(equalToConstant: 24)
+        ])
+        
+        // Add hover tracking
+        let trackingArea = NSTrackingArea(rect: .zero, options: [.activeAlways, .mouseEnteredAndExited, .inVisibleRect], owner: btn, userInfo: nil)
+        btn.addTrackingArea(trackingArea)
     }
+    
+    /// Thin vertical divider (matches AnnotationToolbarView style)
+    private static func makeToolbarDivider() -> NSView {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.wantsLayer = true
+        
+        let line = NSView()
+        line.translatesAutoresizingMaskIntoConstraints = false
+        line.wantsLayer = true
+        line.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.35).cgColor
+        line.layer?.cornerRadius = 0.5
+        container.addSubview(line)
+        
+        NSLayoutConstraint.activate([
+            container.widthAnchor.constraint(equalToConstant: 8),
+            container.heightAnchor.constraint(equalToConstant: 24),
+            line.widthAnchor.constraint(equalToConstant: 1.0),
+            line.heightAnchor.constraint(equalToConstant: 14),
+            line.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            line.centerYAnchor.constraint(equalTo: container.centerYAnchor)
+        ])
+        return container
+    }
+    
+    // MARK: - Draw Background + 2x3 Dot Grip
+    
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        
+        // 1. Draw rounded background (avoids rectangular layer artifact)
+        let bgPath = NSBezierPath(roundedRect: bounds, xRadius: 10, yRadius: 10)
+        NSColor(calibratedRed: 0.11, green: 0.11, blue: 0.12, alpha: 0.96).setFill()
+        bgPath.fill()
+        
+        // 2. Draw subtle border
+        let borderPath = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.4, dy: 0.4), xRadius: 10, yRadius: 10)
+        borderPath.lineWidth = 0.8
+        NSColor.white.withAlphaComponent(0.20).setStroke()
+        borderPath.stroke()
+        
+        // 3. Draw 2x3 dot grip (convert gripView coords from stack view space to self)
+        guard !gripView.isHidden else { return }
+        let gripFrame = gripView.convert(gripView.bounds, to: self)
+        let dotColor = NSColor.white.withAlphaComponent(0.35)
+        ctx.setFillColor(dotColor.cgColor)
+        
+        let dotRadius: CGFloat = 1.5
+        let startX = gripFrame.midX - 2.5  // Center 2 columns horizontally
+        let colSpacing: CGFloat = 5.0
+        let startY = gripFrame.midY - 7.0
+        let rowSpacing: CGFloat = 7.0
+        
+        for col in 0..<2 {
+            let x = startX + CGFloat(col) * colSpacing
+            for row in 0..<3 {
+                let y = startY + CGFloat(row) * rowSpacing
+                ctx.fillEllipse(in: CGRect(x: x - dotRadius, y: y - dotRadius, width: dotRadius * 2, height: dotRadius * 2))
+            }
+        }
+    }
+    
+    // MARK: - State Updates
     
     func updateState(_ state: RecordingCapsuleState) {
         switch state {
         case .countdown(let remaining):
+            gripView.isHidden = false
             statusDot.isHidden = false
             statusDot.layer?.backgroundColor = NSColor.systemOrange.cgColor
             timeLabel.stringValue = "准备录制 \(remaining)s"
-            divider.isHidden = false
+            divider1.isHidden = false
             pauseButton.isHidden = true
             finishButton.isHidden = false
             cancelButton.isHidden = false
@@ -479,6 +590,7 @@ class RecordingControlCapsuleView: NSVisualEffectView {
             spinner.stopAnimation(nil)
             
         case .recording(let elapsed, let maxDuration):
+            gripView.isHidden = false
             statusDot.isHidden = false
             statusDot.layer?.backgroundColor = NSColor.systemRed.cgColor
             let sec = elapsed % 60
@@ -486,16 +598,19 @@ class RecordingControlCapsuleView: NSVisualEffectView {
             let maxSec = maxDuration % 60
             let maxMin = maxDuration / 60
             timeLabel.stringValue = String(format: "%02d:%02d / %02d:%02d", min, sec, maxMin, maxSec)
-            divider.isHidden = false
+            divider1.isHidden = false
             pauseButton.isHidden = false
-            let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
+            let config = NSImage.SymbolConfiguration(pointSize: 12.5, weight: .medium)
             pauseButton.image = NSImage(systemSymbolName: "pause.fill", accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            pauseButton.contentTintColor = NSColor.white.withAlphaComponent(0.85)
+            pauseButton.layer?.backgroundColor = NSColor.clear.cgColor
             finishButton.isHidden = false
             cancelButton.isHidden = false
             spinner.isHidden = true
             spinner.stopAnimation(nil)
             
         case .paused(let elapsed, let maxDuration):
+            gripView.isHidden = false
             statusDot.isHidden = false
             statusDot.layer?.backgroundColor = NSColor.systemYellow.cgColor
             let sec = elapsed % 60
@@ -503,30 +618,67 @@ class RecordingControlCapsuleView: NSVisualEffectView {
             let maxSec = maxDuration % 60
             let maxMin = maxDuration / 60
             timeLabel.stringValue = String(format: "%02d:%02d / %02d:%02d [已暂停]", min, sec, maxMin, maxSec)
-            let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
+            divider1.isHidden = false
+            pauseButton.isHidden = false
+            let config = NSImage.SymbolConfiguration(pointSize: 12.5, weight: .medium)
             pauseButton.image = NSImage(systemSymbolName: "play.fill", accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            pauseButton.contentTintColor = .systemYellow
+            pauseButton.layer?.backgroundColor = NSColor.systemYellow.withAlphaComponent(0.20).cgColor
+            finishButton.isHidden = false
+            cancelButton.isHidden = false
             
         case .encoding:
+            gripView.isHidden = true
             statusDot.isHidden = true
             spinner.isHidden = false
             spinner.startAnimation(nil)
             timeLabel.stringValue = "正在压制 GIF 动图..."
-            divider.isHidden = true
+            divider1.isHidden = true
             pauseButton.isHidden = true
             finishButton.isHidden = true
             cancelButton.isHidden = true
             
         case .completed(let sizeString):
+            gripView.isHidden = true
             spinner.isHidden = true
             spinner.stopAnimation(nil)
             statusDot.isHidden = false
             statusDot.layer?.backgroundColor = NSColor.systemGreen.cgColor
-            timeLabel.stringValue = "✓ 已写入剪贴板 (\(sizeString))"
-            divider.isHidden = true
+            timeLabel.stringValue = "✓ 已复制到剪贴板 (\(sizeString))"
+            divider1.isHidden = true
             pauseButton.isHidden = true
             finishButton.isHidden = true
             cancelButton.isHidden = true
         }
+        
+        // Auto-resize window to fit new content
+        resizeWindowToFit()
+    }
+    
+    /// Recalculates the fitting size and resizes the hosting window.
+    /// Keeps the right edge anchored so only the left side moves.
+    private func resizeWindowToFit() {
+        layoutSubtreeIfNeeded()
+        
+        guard let window = self.window else { return }
+        
+        let newWidth = max(200, fittingSize.width + 12)
+        let currentFrame = window.frame
+        
+        // Anchor right edge: move origin.x left as width grows
+        let newX = currentFrame.maxX - newWidth
+        let newFrame = NSRect(x: newX, y: currentFrame.origin.y, width: newWidth, height: currentFrame.height)
+        
+        // Smooth animated resize
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.15
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            window.animator().setFrame(newFrame, display: true)
+        }
+        
+        // Resize the content view to match
+        self.frame = NSRect(origin: .zero, size: NSSize(width: newWidth, height: currentFrame.height))
+        needsDisplay = true
     }
     
     @objc private func btnPauseClicked() { onPauseToggled?() }

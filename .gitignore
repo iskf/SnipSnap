@@ -26,3 +26,4 @@ Icon
 *.env.local
 .vscode/
 .idea/
+.github/
