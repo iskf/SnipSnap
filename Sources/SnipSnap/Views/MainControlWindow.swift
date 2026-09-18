@@ -6,6 +6,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
     case general = "通用设置"
     case hotkeys = "快捷键"
     case capture = "截图与标注"
+    case recording = "动图录制"
     case pinning = "贴图设置"
     case ocr = "OCR与翻译"
     
@@ -16,6 +17,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
         case .general: return L10n("pref.tab.general")
         case .hotkeys: return L10n("pref.tab.hotkeys")
         case .capture: return L10n("pref.tab.capture")
+        case .recording: return L10n("pref.tab.recording")
         case .pinning: return L10n("pref.tab.pinning")
         case .ocr: return L10n("pref.tab.ocr")
         }
@@ -26,6 +28,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
         case .general: return "gearshape.fill"
         case .hotkeys: return "keyboard.fill"
         case .capture: return "camera.viewfinder"
+        case .recording: return "record.circle.fill"
         case .pinning: return "pin.fill"
         case .ocr: return "character.book.closed.fill"
         }
@@ -36,6 +39,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
         case .general: return Color(nsColor: .systemGray)
         case .hotkeys: return Color(nsColor: .systemGreen)
         case .capture: return Color(nsColor: .systemBlue)
+        case .recording: return Color(nsColor: .systemRed)
         case .pinning: return Color(nsColor: .systemPurple)
         case .ocr: return Color(nsColor: .systemIndigo)
         }
@@ -239,6 +243,8 @@ public struct MainControlView: View {
                     hotkeysSettingsView
                 case .capture:
                     captureSettingsView
+                case .recording:
+                    recordingSettingsView
                 case .pinning:
                     pinningSettingsView
                 case .ocr:
@@ -588,7 +594,96 @@ public struct MainControlView: View {
         }
     }
     
-    // MARK: - 4. Pinning Settings View
+    // MARK: - 4. Recording Settings View
+    
+    private var recordingSettingsView: some View {
+        VStack(spacing: 16) {
+            settingsCard(title: L10n("pref.recording.quality_group")) {
+                VStack(spacing: 12) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(L10n("pref.recording.fps"))
+                                .font(.system(size: 13, weight: .medium))
+                            Text(L10n("pref.recording.fps_desc"))
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Picker("", selection: $config.gifFrameRate) {
+                            Text("10 FPS").tag(10)
+                            Text("15 FPS (\(L10n("common.recommended")))").tag(15)
+                            Text("20 FPS").tag(20)
+                            Text("30 FPS").tag(30)
+                        }
+                        .pickerStyle(.menu)
+                        .frame(width: 170)
+                        .onChange(of: config.gifFrameRate) { _ in config.save() }
+                    }
+                    
+                    Divider().opacity(0.3)
+                    
+                    toggleRow(
+                        title: L10n("pref.recording.downsample"),
+                        subtitle: L10n("pref.recording.downsample_desc"),
+                        isOn: $config.gifDownsample
+                    )
+                }
+            }
+            
+            settingsCard(title: L10n("pref.recording.control_group")) {
+                VStack(spacing: 12) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(L10n("pref.recording.duration"))
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        Spacer()
+                        Picker("", selection: $config.gifMaxDuration) {
+                            Text("15s").tag(15)
+                            Text("30s (\(L10n("common.recommended")))").tag(30)
+                            Text("60s").tag(60)
+                        }
+                        .pickerStyle(.menu)
+                        .frame(width: 170)
+                        .onChange(of: config.gifMaxDuration) { _ in config.save() }
+                    }
+                    
+                    Divider().opacity(0.3)
+                    
+                    toggleRow(
+                        title: L10n("pref.recording.cursor"),
+                        subtitle: L10n("pref.recording.cursor_desc"),
+                        isOn: $config.gifCaptureCursor
+                    )
+                }
+            }
+            
+            settingsCard(title: L10n("pref.recording.output_group")) {
+                VStack(spacing: 12) {
+                    toggleRow(
+                        title: L10n("pref.recording.autocopy"),
+                        isOn: $config.gifAutoCopy
+                    )
+                    
+                    Divider().opacity(0.3)
+                    
+                    toggleRow(
+                        title: L10n("pref.recording.autosave"),
+                        isOn: $config.gifAutoSave
+                    )
+                    
+                    Divider().opacity(0.3)
+                    
+                    toggleRow(
+                        title: L10n("pref.recording.playsound"),
+                        isOn: $config.gifPlaySound
+                    )
+                }
+            }
+        }
+    }
+    
+    // MARK: - 5. Pinning Settings View
     
     private var pinningSettingsView: some View {
         VStack(spacing: 16) {
@@ -898,10 +993,17 @@ public struct MainControlView: View {
         }
     }
     
-    private func toggleRow(title: String, isOn: Binding<Bool>, onToggled: (() -> Void)? = nil) -> some View {
+    private func toggleRow(title: String, subtitle: String? = nil, isOn: Binding<Bool>, onToggled: (() -> Void)? = nil) -> some View {
         HStack {
-            Text(title)
-                .font(.system(size: 13, weight: .regular))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 13, weight: .regular))
+                if let sub = subtitle {
+                    Text(sub)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
             Spacer()
             Toggle("", isOn: isOn)
                 .toggleStyle(.switch)

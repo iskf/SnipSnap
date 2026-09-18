@@ -16,8 +16,8 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
     private var targetDisplayID: CGDirectDisplayID?
     private var cropRect: CGRect = .zero
     private var lastFrameTimestamp: Double = 0.0
-    private let frameInterval: Double = 1.0 / 15.0 // 15 FPS
-    private let maxFrameCount: Int = 15 * 30 // 30 seconds max
+    private var frameInterval: Double = 1.0 / 15.0 // 15 FPS
+    private var maxFrameCount: Int = 15 * 30 // 30 seconds max
     
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
     
@@ -39,6 +39,12 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
     ) {
         guard !isRecording else { return }
         
+        let appConfig = AppConfig.load()
+        let fps = max(5, min(30, appConfig.gifFrameRate))
+        self.frameInterval = 1.0 / Double(fps)
+        let maxDuration = max(5, min(120, appConfig.gifMaxDuration))
+        self.maxFrameCount = fps * maxDuration
+        
         let screenNumber = (targetScreen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
             ?? CGMainDisplayID()
         self.targetDisplayID = screenNumber
@@ -48,8 +54,18 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
         let xInDisplay = localSelectionRect.origin.x
         let yInDisplay = displayHeight - (localSelectionRect.origin.y + localSelectionRect.size.height)
         
-        let width = max(4, Int(round(localSelectionRect.width)) & ~1)
-        let height = max(4, Int(round(localSelectionRect.height)) & ~1)
+        let width: Int
+        let height: Int
+        if appConfig.gifDownsample {
+            // Retina 1x smart downsampling
+            width = max(4, Int(round(localSelectionRect.width)) & ~1)
+            height = max(4, Int(round(localSelectionRect.height)) & ~1)
+        } else {
+            // Native retina resolution
+            let scale = targetScreen.backingScaleFactor
+            width = max(4, Int(round(localSelectionRect.width * scale)) & ~1)
+            height = max(4, Int(round(localSelectionRect.height * scale)) & ~1)
+        }
         self.cropRect = CGRect(x: max(0, xInDisplay), y: max(0, yInDisplay), width: CGFloat(width), height: CGFloat(height))
         
         syncQueue.sync {
@@ -77,8 +93,8 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
                 config.width = width
                 config.height = height
                 config.scalesToFit = false
-                config.showsCursor = true
-                config.minimumFrameInterval = CMTime(value: 1, timescale: 15)
+                config.showsCursor = appConfig.gifCaptureCursor
+                config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(fps))
                 config.pixelFormat = kCVPixelFormatType_32BGRA
                 
                 let stream = SCStream(filter: filter, configuration: config, delegate: nil)
@@ -86,7 +102,7 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
                 try await stream.startCapture()
                 
                 self.stream = stream
-                print("[ScreenGIFRecorder] Recording started at \(width)x\(height), 15fps")
+                print("[ScreenGIFRecorder] Recording started at \(width)x\(height), \(fps)fps (max \(maxDuration)s)")
             } catch {
                 print("[ScreenGIFRecorder] Failed to start SCStream: \(error)")
                 self.syncQueue.async {
@@ -218,23 +234,38 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
     }
     
     private func exportGIFToClipboard(gifData: Data) {
+        let appConfig = AppConfig.load()
         DispatchQueue.main.async {
-            let pasteboard = NSPasteboard.general
-            pasteboard.clearContents()
+            if appConfig.gifAutoCopy {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                
+                // 1. Write GIF data directly as com.compuserve.gif
+                pasteboard.setData(gifData, forType: NSPasteboard.PasteboardType("com.compuserve.gif"))
+                
+                // 2. Also save to temporary directory and write file URL
+                let tempDir = FileManager.default.temporaryDirectory
+                let fileName = "SnipSnap_\(Int(Date().timeIntervalSince1970)).gif"
+                let fileURL = tempDir.appendingPathComponent(fileName)
+                try? gifData.write(to: fileURL)
+                pasteboard.writeObjects([fileURL as NSURL])
+            }
             
-            // 1. Write GIF data directly as com.compuserve.gif
-            pasteboard.setData(gifData, forType: NSPasteboard.PasteboardType("com.compuserve.gif"))
+            if appConfig.gifAutoSave {
+                let saveDir = URL(fileURLWithPath: appConfig.defaultSavePath)
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+                let fileName = "SnipSnap_\(formatter.string(from: Date())).gif"
+                let fileURL = saveDir.appendingPathComponent(fileName)
+                try? gifData.write(to: fileURL)
+                print("[ScreenGIFRecorder] Saved GIF to: \(fileURL.path)")
+            }
             
-            // 2. Also save to temporary directory and write file URL
-            let tempDir = FileManager.default.temporaryDirectory
-            let fileName = "SnipSnap_\(Int(Date().timeIntervalSince1970)).gif"
-            let fileURL = tempDir.appendingPathComponent(fileName)
-            try? gifData.write(to: fileURL)
-            pasteboard.writeObjects([fileURL as NSURL])
-            
-            // 3. Play pleasant system sound
-            NSSound(named: "Tink")?.play()
-            print("[ScreenGIFRecorder] Copied GIF (\(gifData.count) bytes) to clipboard and played sound.")
+            // 3. Play sound if enabled
+            if appConfig.gifPlaySound {
+                NSSound(named: "Tink")?.play()
+            }
+            print("[ScreenGIFRecorder] Processed GIF export (\(gifData.count) bytes).")
         }
     }
 }

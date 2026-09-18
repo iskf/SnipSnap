@@ -191,6 +191,96 @@ public class I18n: ObservableObject {
             .ja: "OCR と翻訳",
             .ko: "OCR 및 번역"
         ],
+        "pref.tab.recording": [
+            .zhHans: "动图录制",
+            .en: "GIF Recording",
+            .ja: "GIF録画",
+            .ko: "GIF 녹화"
+        ],
+        "pref.recording.quality_group": [
+            .zhHans: "画质与性能",
+            .en: "Quality & Performance",
+            .ja: "画質とパフォーマンス",
+            .ko: "화질 및 성능"
+        ],
+        "pref.recording.fps": [
+            .zhHans: "录制帧率",
+            .en: "Frame Rate",
+            .ja: "フレームレート",
+            .ko: "프레임 레이트"
+        ],
+        "pref.recording.fps_desc": [
+            .zhHans: "推荐 15 FPS，在动效平滑度与生成体积间取得最佳平衡。",
+            .en: "15 FPS recommended for optimal balance between smoothness and size.",
+            .ja: "スムーズさとファイルサイズの最適なバランスに15 FPSを推奨します。",
+            .ko: "부드러움과 파일 크기의 최적 균형을 위해 15 FPS를 권장합니다."
+        ],
+        "pref.recording.downsample": [
+            .zhHans: "Retina 屏幕 1x 智能降采样",
+            .en: "Retina 1x Smart Downsampling",
+            .ja: "Retina 1x スマート縮小",
+            .ko: "Retina 1x 스마트 다운샘플링"
+        ],
+        "pref.recording.downsample_desc": [
+            .zhHans: "将高分屏像素密度缩放至 1x，防止生成数十 MB 的膨胀动图。",
+            .en: "Scale down Retina pixels to 1x to avoid generating bloated GIF files.",
+            .ja: "巨大なGIFファイルの生成を防ぐため、Retinaピクセルを1xに縮小します。",
+            .ko: "거대한 GIF 생성을 방지하기 위해 Retina 픽셀을 1x로 축소합니다."
+        ],
+        "pref.recording.control_group": [
+            .zhHans: "捕获控制与时长",
+            .en: "Capture & Duration",
+            .ja: "キャプチャ制御と時間",
+            .ko: "캡처 제어 및 시간"
+        ],
+        "pref.recording.duration": [
+            .zhHans: "最大录制时长",
+            .en: "Max Duration",
+            .ja: "最大録画時間",
+            .ko: "최대 녹화 시간"
+        ],
+        "pref.recording.cursor": [
+            .zhHans: "捕获鼠标光标",
+            .en: "Capture Mouse Cursor",
+            .ja: "マウスカーソルを含める",
+            .ko: "마우스 커서 포함"
+        ],
+        "pref.recording.cursor_desc": [
+            .zhHans: "在动图中包含鼠标光标轨迹，方便操作步骤指引与演示。",
+            .en: "Include mouse cursor trajectory in the recorded GIF.",
+            .ja: "操作手順をわかりやすくするため、カーソル軌跡を表示します。",
+            .ko: "작업 단계를 쉽게 시연하기 위해 마우스 커서 궤적을 포함합니다."
+        ],
+        "pref.recording.output_group": [
+            .zhHans: "输出与交付",
+            .en: "Export & Delivery",
+            .ja: "エクスポートと出力",
+            .ko: "내보내기 및 전달"
+        ],
+        "pref.recording.autocopy": [
+            .zhHans: "录制完成后自动写入剪贴板",
+            .en: "Auto-Copy GIF to Clipboard on Finish",
+            .ja: "完了時にクリップボードへ自動コピー",
+            .ko: "완료 시 클립보드에 자동 복사"
+        ],
+        "pref.recording.autosave": [
+            .zhHans: "同时自动保存到默认文件夹",
+            .en: "Auto-Save to Default Folder",
+            .ja: "デフォルトフォルダにも自動保存",
+            .ko: "기본 폴더에도 자동 저장"
+        ],
+        "pref.recording.playsound": [
+            .zhHans: "录制完成播放提示音",
+            .en: "Play Sound on Finish",
+            .ja: "完了時にサウンドを再生",
+            .ko: "완료 시 효과음 재생"
+        ],
+        "common.recommended": [
+            .zhHans: "推荐",
+            .en: "Recommended",
+            .ja: "推奨",
+            .ko: "권장"
+        ],
         
         // General Tab
         "pref.general.lang_card": [

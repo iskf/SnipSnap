@@ -142,7 +142,7 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         
         // Group 3: 操作区 (取消, 录制动图, 保存, 贴屏, 完成并复制)
         addActionButton(icon: "xmark", tipKey: "toolbar.action.cancel", keycap: "Esc", action: #selector(btnCloseClicked))
-        addActionButton(icon: "record.circle", tipKey: "toolbar.action.record_gif", action: #selector(btnRecordGIFClicked))
+        addActionButton(icon: "record.circle.fill", tipKey: "toolbar.action.record_gif", tint: NSColor(calibratedRed: 1.0, green: 0.28, blue: 0.28, alpha: 0.95), action: #selector(btnRecordGIFClicked))
         addActionButton(icon: "square.and.arrow.down", tipKey: "toolbar.action.save", keycap: "⌘S", action: #selector(btnSaveClicked))
         addActionButton(icon: "pin", tipKey: "toolbar.action.pin", keycap: "F3", action: #selector(btnPinClicked))
         addActionButton(icon: "checkmark", tipKey: "toolbar.action.copy", keycap: "Enter", action: #selector(btnCopyClicked))
@@ -179,8 +179,8 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         mainRowStack.addArrangedSubview(btn)
     }
     
-    private func addActionButton(icon: String, tipKey: String, keycap: String? = nil, action: Selector) {
-        let btn = ToolbarIconButton(icon: icon, tipKey: tipKey, keycap: keycap, target: self, action: action)
+    private func addActionButton(icon: String, tipKey: String, keycap: String? = nil, tint: NSColor = NSColor.white.withAlphaComponent(0.85), action: Selector) {
+        let btn = ToolbarIconButton(icon: icon, tipKey: tipKey, keycap: keycap, tint: tint, target: self, action: action)
         mainRowStack.addArrangedSubview(btn)
     }
     

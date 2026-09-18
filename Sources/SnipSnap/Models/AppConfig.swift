@@ -48,6 +48,15 @@ public struct AppConfig: Codable, Equatable {
     public var deeplAuthKey: String = ""
     public var deeplIsFreeAPI: Bool = true
     
+    // MARK: - 6. GIF Recording (动图录制设置)
+    public var gifFrameRate: Int = 15 // 10, 15, 20, 30
+    public var gifMaxDuration: Int = 30 // 15, 30, 60
+    public var gifDownsample: Bool = true
+    public var gifCaptureCursor: Bool = true
+    public var gifAutoCopy: Bool = true
+    public var gifAutoSave: Bool = false
+    public var gifPlaySound: Bool = true
+    
     public init() {}
     
     public init(from decoder: Decoder) throws {
@@ -81,6 +90,13 @@ public struct AppConfig: Codable, Equatable {
         self.translationProvider = (prov == "builtin") ? "apple" : prov
         self.deeplAuthKey = (try? container.decodeIfPresent(String.self, forKey: .deeplAuthKey)) ?? ""
         self.deeplIsFreeAPI = (try? container.decodeIfPresent(Bool.self, forKey: .deeplIsFreeAPI)) ?? true
+        self.gifFrameRate = (try? container.decodeIfPresent(Int.self, forKey: .gifFrameRate)) ?? 15
+        self.gifMaxDuration = (try? container.decodeIfPresent(Int.self, forKey: .gifMaxDuration)) ?? 30
+        self.gifDownsample = (try? container.decodeIfPresent(Bool.self, forKey: .gifDownsample)) ?? true
+        self.gifCaptureCursor = (try? container.decodeIfPresent(Bool.self, forKey: .gifCaptureCursor)) ?? true
+        self.gifAutoCopy = (try? container.decodeIfPresent(Bool.self, forKey: .gifAutoCopy)) ?? true
+        self.gifAutoSave = (try? container.decodeIfPresent(Bool.self, forKey: .gifAutoSave)) ?? false
+        self.gifPlaySound = (try? container.decodeIfPresent(Bool.self, forKey: .gifPlaySound)) ?? true
     }
     
     // MARK: - Persistence
