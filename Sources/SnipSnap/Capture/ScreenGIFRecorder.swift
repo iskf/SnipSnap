@@ -13,6 +13,7 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
     private var frames: [CGImage] = []
     private let syncQueue = DispatchQueue(label: "com.snipsnap.gifrecorder.sync")
     private var isRecording: Bool = false
+    private var isPaused: Bool = false
     private var targetDisplayID: CGDirectDisplayID?
     private var cropRect: CGRect = .zero
     private var lastFrameTimestamp: Double = 0.0
@@ -29,12 +30,12 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
     /// - Parameters:
     ///   - targetScreen: The NSScreen where selection was made
     ///   - localSelectionRect: Selection in AppKit coordinates (origin at bottom-left)
-    ///   - excludingWindowNumber: Window ID to exclude (e.g. CaptureOverlayWindow)
-    ///   - onMaxTimeReached: Called if 30s limit is reached
+    ///   - excludingWindowNumbers: Window IDs to exclude (e.g. border and control capsule windows)
+    ///   - onMaxTimeReached: Called if max duration is reached
     public func startRecording(
         targetScreen: NSScreen,
         localSelectionRect: CGRect,
-        excludingWindowNumber: Int?,
+        excludingWindowNumbers: [Int] = [],
         onMaxTimeReached: (() -> Void)? = nil
     ) {
         guard !isRecording else { return }
@@ -71,6 +72,7 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
         syncQueue.sync {
             frames.removeAll(keepingCapacity: true)
             isRecording = true
+            isPaused = false
             lastFrameTimestamp = 0.0
         }
         
@@ -82,10 +84,8 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
                     return
                 }
                 
-                var excludedWindows: [SCWindow] = []
-                if let winNum = excludingWindowNumber {
-                    excludedWindows = content.windows.filter { $0.windowID == CGWindowID(winNum) }
-                }
+                let excludedSet = Set(excludingWindowNumbers.map { CGWindowID($0) })
+                let excludedWindows = content.windows.filter { excludedSet.contains($0.windowID) }
                 
                 let filter = SCContentFilter(display: display, excludingWindows: excludedWindows)
                 let config = SCStreamConfiguration()
@@ -107,8 +107,40 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
                 print("[ScreenGIFRecorder] Failed to start SCStream: \(error)")
                 self.syncQueue.async {
                     self.isRecording = false
+                    self.isPaused = false
                 }
             }
+        }
+    }
+    
+    public func pauseRecording() {
+        syncQueue.sync {
+            isPaused = true
+            print("[ScreenGIFRecorder] Recording paused.")
+        }
+    }
+    
+    public func resumeRecording() {
+        syncQueue.sync {
+            isPaused = false
+            lastFrameTimestamp = 0.0
+            print("[ScreenGIFRecorder] Recording resumed.")
+        }
+    }
+    
+    public func cancelRecording() {
+        syncQueue.sync {
+            isRecording = false
+            isPaused = false
+            frames.removeAll()
+        }
+        let activeStream = self.stream
+        self.stream = nil
+        Task {
+            if let s = activeStream {
+                try? await s.stopCapture()
+            }
+            print("[ScreenGIFRecorder] Recording cancelled.")
         }
     }
     
@@ -120,7 +152,7 @@ public class ScreenGIFRecorder: NSObject, SCStreamOutput, @unchecked Sendable {
         let now = CACurrentMediaTime()
         var shouldCapture = false
         syncQueue.sync {
-            if isRecording {
+            if isRecording && !isPaused {
                 if lastFrameTimestamp == 0 || (now - lastFrameTimestamp) >= (frameInterval * 0.85) {
                     lastFrameTimestamp = now
                     shouldCapture = true

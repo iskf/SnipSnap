@@ -41,13 +41,6 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     private var ocrFloatingHubView: NSVisualEffectView?
     private var translateHUDView: InPlaceTranslateHUDHostingView?
     
-    // Screen GIF Recording state
-    public private(set) var isRecordingGIF: Bool = false
-    private var recordingSeconds: Int = 0
-    private var pulsePhase: Double = 0.0
-    private var recordingTimer: Timer?
-    private var recordingBadgeRect: CGRect = .zero
-    
     public var captureMode: CaptureMode = .normal {
         didSet {
             if captureMode == .translate {
@@ -133,13 +126,6 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     // MARK: - Keyboard Handling & Shortcuts
     
     public override func keyDown(with event: NSEvent) {
-        if isRecordingGIF {
-            if event.keyCode == 36 || event.keyCode == 49 || event.keyCode == 53 { // Enter, Space, Escape -> Finish recording
-                stopGIFRecording()
-                return
-            }
-        }
-        
         switch event.keyCode {
         case 8: // 'C' key -> Copy Color value
             if selectionRect.isEmpty {
@@ -313,18 +299,6 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     }
     
     public override func hitTest(_ point: NSPoint) -> NSView? {
-        if isRecordingGIF {
-            // 1. If clicked on the recording badge, intercept to stop recording
-            if !recordingBadgeRect.isEmpty && recordingBadgeRect.insetBy(dx: -4, dy: -4).contains(point) {
-                return self
-            }
-            // 2. If click is inside selectionRect, pass through to underlying applications!
-            if !selectionRect.isEmpty && selectionRect.contains(point) {
-                return nil
-            }
-            // 3. If clicked outside selectionRect on dimmed backdrop, intercept to stop recording
-            return self
-        }
         if let hub = ocrFloatingHubView, !hub.isHidden, hub.frame.contains(point) {
             return hub.hitTest(point)
         }
@@ -453,14 +427,6 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     // MARK: - Mouse Dragging & Actions
     
     public override func mouseDown(with event: NSEvent) {
-        if isRecordingGIF {
-            let rawPoint = convert(event.locationInWindow, from: nil)
-            // Stop if clicked the badge or clicked outside the selection rect
-            if (!recordingBadgeRect.isEmpty && recordingBadgeRect.insetBy(dx: -4, dy: -4).contains(rawPoint)) || !selectionRect.contains(rawPoint) {
-                stopGIFRecording()
-            }
-            return
-        }
         if isSavePanelActive { return }
         window?.makeFirstResponder(self)
         let rawPoint = convert(event.locationInWindow, from: nil)
@@ -785,94 +751,50 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
             context.fill(selectionRect)
             context.restoreGState()
             
-            if isRecordingGIF {
-                // 1. Apple-style Red Pulsating Glow Border
-                context.saveGState()
-                let pulse = (sin(pulsePhase * 6.0) + 1.0) / 2.0
-                let blurRadius: CGFloat = 6.0 + CGFloat(pulse * 6.0)
-                let glowColor = NSColor.systemRed.withAlphaComponent(0.6 + 0.4 * pulse).cgColor
-                context.setShadow(offset: .zero, blur: blurRadius, color: glowColor)
-                context.setStrokeColor(NSColor.systemRed.cgColor)
-                context.setLineWidth(2.5)
-                context.stroke(selectionRect.insetBy(dx: -1.0, dy: -1.0))
-                context.restoreGState()
-                
-                // 2. Dynamic Recording Badge: Red capsule with recording dot, live timer, and stop button
-                let maxDuration = AppConfig.load().gifMaxDuration
-                let timeStr = String(format: "● %02ds / %02ds  ✕ %@", recordingSeconds, maxDuration, L10n("toolbar.action.cancel"))
-                let badgeFont = NSFont.monospacedDigitSystemFont(ofSize: 11.5, weight: .bold)
-                let badgeAttrs: [NSAttributedString.Key: Any] = [
-                    .font: badgeFont,
-                    .foregroundColor: NSColor.white
-                ]
-                let badgeSize = (timeStr as NSString).size(withAttributes: badgeAttrs)
-                let badgeWidth = badgeSize.width + 18
-                let badgeHeight = badgeSize.height + 8
-                
-                let badgeX = min(bounds.width - badgeWidth - 8, max(8, selectionRect.maxX - badgeWidth))
-                let badgeY = (selectionRect.maxY + badgeHeight + 8 < bounds.height)
-                    ? selectionRect.maxY + 6
-                    : max(8, selectionRect.maxY - badgeHeight - 6)
-                let badgeRect = CGRect(x: badgeX, y: badgeY, width: badgeWidth, height: badgeHeight)
-                self.recordingBadgeRect = badgeRect
-                
-                context.saveGState()
-                context.setFillColor(NSColor(calibratedRed: 0.9, green: 0.15, blue: 0.15, alpha: 0.95).cgColor)
-                let pillPath = NSBezierPath(roundedRect: badgeRect, xRadius: badgeHeight / 2, yRadius: badgeHeight / 2)
-                pillPath.fill()
-                
-                context.setStrokeColor(NSColor.white.withAlphaComponent(0.35).cgColor)
-                context.setLineWidth(1.0)
-                pillPath.stroke()
-                
-                (timeStr as NSString).draw(at: CGPoint(x: badgeRect.minX + 9, y: badgeRect.minY + 4), withAttributes: badgeAttrs)
-                context.restoreGState()
-            } else {
-                // 1. Apple Intelligence Violet-Blue Radiant Optical Glow Border:
-                context.saveGState()
-                // Outer radiant optical glow (radius 8.0, Apple Intelligence luminous violet-blue)
-                context.setShadow(
-                    offset: .zero,
-                    blur: 8.0,
-                    color: NSColor(red: 0.55, green: 0.35, blue: 1.0, alpha: 0.85).cgColor
-                )
-                context.setStrokeColor(NSColor(red: 0.45, green: 0.55, blue: 1.0, alpha: 0.95).cgColor)
-                context.setLineWidth(1.8)
-                context.stroke(selectionRect.insetBy(dx: -0.5, dy: -0.5))
-                
-                // Inner crisp core line (radiant light blue)
-                context.setShadow(offset: .zero, blur: 0, color: nil)
-                context.setStrokeColor(NSColor(red: 0.75, green: 0.88, blue: 1.0, alpha: 0.95).cgColor)
-                context.setLineWidth(1.0)
-                context.stroke(selectionRect.insetBy(dx: -0.5, dy: -0.5))
-                context.restoreGState()
-                
-                // 8 resize handles (macOS native circular/pill dots)
-                drawHandles(for: selectionRect, in: context)
-                
-                // Dynamic dimension HUD: Frosted glass capsule with subtle border
-                let sizeStr = "\(Int(selectionRect.width)) × \(Int(selectionRect.height))"
-                let hudFont = NSFont.monospacedSystemFont(ofSize: 10.5, weight: .bold)
-                let hudAttrs: [NSAttributedString.Key: Any] = [
-                    .font: hudFont,
-                    .foregroundColor: NSColor.white
-                ]
-                let hudSize = (sizeStr as NSString).size(withAttributes: hudAttrs)
-                let hudRect = CGRect(x: selectionRect.minX, y: selectionRect.maxY + 5, width: hudSize.width + 14, height: hudSize.height + 7)
-                
-                // Frosted dark pill background
-                context.setFillColor(NSColor(calibratedWhite: 0.12, alpha: 0.88).cgColor)
-                let bgPath = NSBezierPath(roundedRect: hudRect, xRadius: 6, yRadius: 6)
-                bgPath.fill()
-                
-                // Subtle border around HUD
-                context.setStrokeColor(NSColor.white.withAlphaComponent(0.18).cgColor)
-                context.setLineWidth(0.8)
-                let strokePath = NSBezierPath(roundedRect: hudRect, xRadius: 6, yRadius: 6)
-                strokePath.stroke()
-                
-                (sizeStr as NSString).draw(at: CGPoint(x: hudRect.minX + 7, y: hudRect.minY + 3.5), withAttributes: hudAttrs)
-            }
+            // 1. Apple Intelligence Violet-Blue Radiant Optical Glow Border:
+            context.saveGState()
+            // Outer radiant optical glow (radius 8.0, Apple Intelligence luminous violet-blue)
+            context.setShadow(
+                offset: .zero,
+                blur: 8.0,
+                color: NSColor(red: 0.55, green: 0.35, blue: 1.0, alpha: 0.85).cgColor
+            )
+            context.setStrokeColor(NSColor(red: 0.45, green: 0.55, blue: 1.0, alpha: 0.95).cgColor)
+            context.setLineWidth(1.8)
+            context.stroke(selectionRect.insetBy(dx: -0.5, dy: -0.5))
+            
+            // Inner crisp core line (radiant light blue)
+            context.setShadow(offset: .zero, blur: 0, color: nil)
+            context.setStrokeColor(NSColor(red: 0.75, green: 0.88, blue: 1.0, alpha: 0.95).cgColor)
+            context.setLineWidth(1.0)
+            context.stroke(selectionRect.insetBy(dx: -0.5, dy: -0.5))
+            context.restoreGState()
+            
+            // 8 resize handles (macOS native circular/pill dots)
+            drawHandles(for: selectionRect, in: context)
+            
+            // Dynamic dimension HUD: Frosted glass capsule with subtle border
+            let sizeStr = "\(Int(selectionRect.width)) × \(Int(selectionRect.height))"
+            let hudFont = NSFont.monospacedSystemFont(ofSize: 10.5, weight: .bold)
+            let hudAttrs: [NSAttributedString.Key: Any] = [
+                .font: hudFont,
+                .foregroundColor: NSColor.white
+            ]
+            let hudSize = (sizeStr as NSString).size(withAttributes: hudAttrs)
+            let hudRect = CGRect(x: selectionRect.minX, y: selectionRect.maxY + 5, width: hudSize.width + 14, height: hudSize.height + 7)
+            
+            // Frosted dark pill background
+            context.setFillColor(NSColor(calibratedWhite: 0.12, alpha: 0.88).cgColor)
+            let bgPath = NSBezierPath(roundedRect: hudRect, xRadius: 6, yRadius: 6)
+            bgPath.fill()
+            
+            // Subtle border around HUD
+            context.setStrokeColor(NSColor.white.withAlphaComponent(0.18).cgColor)
+            context.setLineWidth(0.8)
+            let strokePath = NSBezierPath(roundedRect: hudRect, xRadius: 6, yRadius: 6)
+            strokePath.stroke()
+            
+            (sizeStr as NSString).draw(at: CGPoint(x: hudRect.minX + 7, y: hudRect.minY + 3.5), withAttributes: hudAttrs)
             
             // In-place OCR word bounding boxes
             if isOCROverlayActive, let ocr = ocrResult {
@@ -1162,63 +1084,29 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     // MARK: - GIF Recording Controls
     
     public func toolbarDidClickRecordGIF() {
-        startGIFRecording()
-    }
-    
-    public func startGIFRecording() {
-        guard !selectionRect.isEmpty else { return }
-        guard !isRecordingGIF else { return }
+        if selectionRect.isEmpty || selectionRect.width < 10 || selectionRect.height < 10 {
+            if let win = detectedWindows.first(where: { $0.frame.contains(currentMousePoint) }) {
+                selectionRect = win.frame.intersection(bounds)
+            } else {
+                selectionRect = bounds
+            }
+        }
+        guard let screen = window?.screen ?? NSScreen.main else { return }
         
-        isRecordingGIF = true
-        recordingSeconds = 0
-        pulsePhase = 0.0
-        
-        // Hide overlay UI components during recording
-        toolbarView?.isHidden = true
-        magnifierView.isHidden = true
-        canvasView.isHidden = true
-        
-        needsDisplay = true
-        
-        guard let targetScreen = window?.screen ?? NSScreen.main else { return }
-        
-        ScreenGIFRecorder.shared.startRecording(
-            targetScreen: targetScreen,
-            localSelectionRect: selectionRect,
-            excludingWindowNumber: window?.windowNumber
+        let screenRect = NSRect(
+            x: fullBounds.origin.x + selectionRect.origin.x,
+            y: fullBounds.origin.y + selectionRect.origin.y,
+            width: selectionRect.width,
+            height: selectionRect.height
         )
         
-        let maxDuration = AppConfig.load().gifMaxDuration
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self = self, self.isRecordingGIF else { return }
-            self.pulsePhase += 0.1
-            let sec = Int(self.pulsePhase)
-            if sec != self.recordingSeconds {
-                self.recordingSeconds = sec
-                if self.recordingSeconds >= maxDuration {
-                    self.stopGIFRecording()
-                    return
-                }
-            }
-            self.needsDisplay = true
-        }
-    }
-    
-    public func stopGIFRecording() {
-        guard isRecordingGIF else { return }
-        isRecordingGIF = false
-        recordingTimer?.invalidate()
-        recordingTimer = nil
-        recordingBadgeRect = .zero
-        
-        // Immediately dismiss overlay window so user returns to desktop
+        // Immediately dismiss overlay window to release full-screen dimming and focus
+        ToolbarTooltipHUD.shared.hide()
         onClose?()
         
-        // Stop capture stream and encode GIF asynchronously in background
-        ScreenGIFRecorder.shared.stopRecording { gifData in
-            if let data = gifData {
-                print("[CaptureOverlayView] GIF recording finished: \(data.count) bytes")
-            }
+        // Launch CleanShot-style dual-window recording session
+        DispatchQueue.main.async {
+            GIFRecordingSession.shared.startSession(screen: screen, screenRect: screenRect)
         }
     }
     
