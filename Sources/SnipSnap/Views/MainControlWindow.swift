@@ -11,6 +11,16 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
     
     public var id: String { rawValue }
     
+    public var title: String {
+        switch self {
+        case .general: return L10n("pref.tab.general")
+        case .hotkeys: return L10n("pref.tab.hotkeys")
+        case .capture: return L10n("pref.tab.capture")
+        case .pinning: return L10n("pref.tab.pinning")
+        case .ocr: return L10n("pref.tab.ocr")
+        }
+    }
+    
     public var icon: String {
         switch self {
         case .general: return "gearshape.fill"
@@ -40,7 +50,7 @@ public class MainControlViewModel: ObservableObject {
     }
 }
 
-public class MainControlWindowController: NSWindowController {
+public class MainControlWindowController: NSWindowController, NSWindowDelegate {
     public static var shared: MainControlWindowController?
     public var viewModel: MainControlViewModel = MainControlViewModel()
     
@@ -55,6 +65,7 @@ public class MainControlWindowController: NSWindowController {
     private static func getOrCreateController(tab: ControlCenterSubTab) -> MainControlWindowController {
         if let existing = shared {
             existing.viewModel.selectedTab = tab
+            existing.window?.title = L10n("pref.title")
             return existing
         }
         
@@ -65,7 +76,7 @@ public class MainControlWindowController: NSWindowController {
             defer: false
         )
         window.center()
-        window.title = "偏好设置"
+        window.title = L10n("pref.title")
         window.minSize = NSSize(width: 600, height: 440)
         window.isMovableByWindowBackground = false
         window.isReleasedWhenClosed = false
@@ -76,6 +87,7 @@ public class MainControlWindowController: NSWindowController {
         
         let controller = MainControlWindowController(window: window)
         controller.viewModel = vm
+        window.delegate = controller
         shared = controller
         return controller
     }
@@ -83,9 +95,16 @@ public class MainControlWindowController: NSWindowController {
     public static func show(tab: ControlCenterSubTab = .general) {
         let controller = getOrCreateController(tab: tab)
         controller.viewModel.selectedTab = tab
+        controller.window?.title = L10n("pref.title")
+        NSApp.setActivationPolicy(.regular)
         controller.showWindow(nil)
         controller.window?.makeKeyAndOrderFront(nil)
+        controller.window?.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    public func windowWillClose(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
     }
 }
 
@@ -93,6 +112,7 @@ public class MainControlWindowController: NSWindowController {
 
 public struct MainControlView: View {
     @ObservedObject var viewModel: MainControlViewModel
+    @ObservedObject private var i18n = I18n.shared
     @State private var config = AppConfig.load()
     @State private var showResetAlert: Bool = false
     @State private var deeplTestStatus: String? = nil
@@ -119,20 +139,23 @@ public struct MainControlView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(minWidth: 600, minHeight: 440)
-        .alert("确认恢复全部默认设置？", isPresented: $showResetAlert) {
-            Button("取消", role: .cancel) { }
-            Button("确认恢复", role: .destructive) {
+        .alert(L10n("pref.general.alert_title"), isPresented: $showResetAlert) {
+            Button(L10n("pref.general.cancel"), role: .cancel) { }
+            Button(L10n("pref.general.confirm_reset"), role: .destructive) {
                 config.resetToDefaults()
                 GlobalHotkeyManager.shared.reloadFromConfig()
             }
         } message: {
-            Text("所有通用配置、快捷键、标注偏好与贴图行为将重置为初始出厂设置。")
+            Text(L10n("pref.general.alert_msg"))
         }
         .onAppear {
             accessibilityGranted = GlobalHotkeyManager.isAccessibilityGranted
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             accessibilityGranted = GlobalHotkeyManager.isAccessibilityGranted
+        }
+        .onReceive(NotificationCenter.default.publisher(for: I18n.languageDidChangeNotification)) { _ in
+            MainControlWindowController.shared?.window?.title = L10n("pref.title")
         }
     }
     
@@ -142,7 +165,7 @@ public struct MainControlView: View {
         VStack(spacing: 0) {
             // Section Header
             HStack {
-                Text("偏好设置")
+                Text(L10n("pref.title"))
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundColor(.secondary)
                     .textCase(.uppercase)
@@ -174,7 +197,7 @@ public struct MainControlView: View {
                                     .foregroundColor(.white)
                             }
                             
-                            Text(tab.rawValue)
+                            Text(tab.title)
                                 .font(.system(size: 12, weight: isSelected ? .medium : .regular))
                                 .foregroundColor(isSelected ? .white : .primary)
                             
@@ -232,34 +255,55 @@ public struct MainControlView: View {
     
     private var generalSettingsView: some View {
         VStack(spacing: 16) {
-            settingsCard(title: "启动与系统") {
-                VStack(spacing: 12) {
-                    toggleRow(title: "登录时自动启动 SnipSnap", isOn: $config.launchAtLogin) {
-                        updateLaunchAtLogin(config.launchAtLogin)
+            settingsCard(title: L10n("pref.general.lang_card")) {
+                HStack {
+                    Text(L10n("pref.general.lang_label"))
+                        .font(.system(size: 13, weight: .regular))
+                    Spacer()
+                    Picker("", selection: Binding(
+                        get: { i18n.currentLanguage },
+                        set: { newLang in
+                            i18n.setLanguage(newLang)
+                        }
+                    )) {
+                        ForEach(AppLanguage.allCases) { lang in
+                            Text(lang.displayName).tag(lang)
+                        }
                     }
-                    Divider().opacity(0.3)
-                    toggleRow(title: "菜单栏使用极简单色图标", isOn: $config.menuBarIconMonochrome) {
-                        MenuBarController.shared.updateIconStyle(isMonochrome: config.menuBarIconMonochrome)
-                    }
-                    Divider().opacity(0.3)
-                    toggleRow(title: "截图与复制成功后播放清脆提示音 (Tink)", isOn: $config.playSoundEffect)
+                    .pickerStyle(.menu)
+                    .controlSize(.small)
+                    .frame(width: 190)
                 }
             }
             
-            settingsCard(title: "存储与保存规则") {
+            settingsCard(title: L10n("pref.general.system_card")) {
+                VStack(spacing: 12) {
+                    toggleRow(title: L10n("pref.general.launch_at_login"), isOn: $config.launchAtLogin) {
+                        updateLaunchAtLogin(config.launchAtLogin)
+                    }
+                    Divider().opacity(0.3)
+                    toggleRow(title: L10n("pref.general.monochrome_icon"), isOn: $config.menuBarIconMonochrome) {
+                        MenuBarController.shared.updateIconStyle(isMonochrome: config.menuBarIconMonochrome)
+                    }
+                    Divider().opacity(0.3)
+                    toggleRow(title: L10n("pref.general.sound_effect"), isOn: $config.playSoundEffect)
+                }
+            }
+            
+            settingsCard(title: L10n("pref.general.storage_card")) {
                 VStack(spacing: 12) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("默认保存目录")
+                            Text(L10n("pref.general.default_path"))
                                 .font(.system(size: 13, weight: .medium))
-                            Text(config.defaultSavePath.isEmpty ? "桌面" : config.defaultSavePath)
+                            Text(config.defaultSavePath.isEmpty ? L10n("pref.general.desktop") : config.defaultSavePath)
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
                         }
                         Spacer()
-                        Button("更改目录...") {
+                        Button(L10n("pref.general.change_dir")) {
                             chooseDefaultDirectory()
                         }
                         .buttonStyle(.bordered)
@@ -269,12 +313,12 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HStack {
-                        Text("图片保存格式")
+                        Text(L10n("pref.general.format"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.imageSaveFormat) {
-                            Text("PNG (无损)").tag("PNG")
-                            Text("JPEG (紧凑)").tag("JPEG")
+                            Text("PNG").tag("PNG")
+                            Text("JPEG").tag("JPEG")
                         }
                         .pickerStyle(.segmented)
                         .controlSize(.small)
@@ -286,25 +330,25 @@ public struct MainControlView: View {
                     
                     Divider().opacity(0.3)
                     
-                    toggleRow(title: "截图完成后自动保存到默认文件夹", isOn: $config.autoSaveAfterCapture)
+                    toggleRow(title: L10n("pref.general.auto_save"), isOn: $config.autoSaveAfterCapture)
                     
                     Divider().opacity(0.3)
                     
-                    toggleRow(title: "截图完成后自动复制到系统剪贴板", isOn: $config.autoCopyAfterCapture)
+                    toggleRow(title: L10n("pref.general.auto_copy"), isOn: $config.autoCopyAfterCapture)
                 }
             }
             
-            settingsCard(title: "配置重置") {
+            settingsCard(title: L10n("pref.general.reset_card")) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("恢复出厂默认设置")
+                        Text(L10n("pref.general.reset_title"))
                             .font(.system(size: 13, weight: .medium))
-                        Text("重置所有通用配置、快捷键、截图标注偏好与贴图行为")
+                        Text(L10n("pref.general.reset_desc"))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
                     Spacer()
-                    Button("恢复默认...") {
+                    Button(L10n("pref.general.reset_btn")) {
                         showResetAlert = true
                     }
                     .buttonStyle(.bordered)
@@ -318,7 +362,7 @@ public struct MainControlView: View {
     
     private var hotkeysSettingsView: some View {
         VStack(spacing: 16) {
-            settingsCard(title: "⚡ 全系统最高优先级拦截状态 (硬件级 CGEventTap)") {
+            settingsCard(title: L10n("pref.hotkey.intercept_card")) {
                 VStack(alignment: .leading, spacing: 8) {
                     if accessibilityGranted {
                         HStack(alignment: .top, spacing: 10) {
@@ -327,15 +371,15 @@ public struct MainControlView: View {
                                 .font(.system(size: 16))
                                 .padding(.top, 1)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("最高优先级拦截引擎已激活")
+                                Text(L10n("pref.hotkey.intercept_active"))
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundColor(.primary)
-                                Text("拦截层级位于 macOS HID 硬件驱动事件首位。顶排按键 (F1-F4) 可免按 fn 实体键直接呼出截屏/贴图，已智能阻止屏幕亮度调节与调度中心冲突。")
+                                Text(L10n("pref.hotkey.intercept_active_desc"))
                                     .font(.system(size: 11.5))
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
-                        }
+                         }
                     } else {
                         HStack(alignment: .top, spacing: 10) {
                             Image(systemName: "exclamationmark.shield.fill")
@@ -343,22 +387,22 @@ public struct MainControlView: View {
                                 .font(.system(size: 16))
                                 .padding(.top, 1)
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("最高优先级拦截待授权（当前运行于标准 Carbon 兼容模式）")
+                                Text(L10n("pref.hotkey.intercept_unauth"))
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundColor(.primary)
-                                Text("建议开启「辅助功能」权限，以激活硬件级最高优先级拦截，彻底杜绝 F1-F4 与 Mac 原生亮度或调度中心抢占。")
+                                Text(L10n("pref.hotkey.intercept_unauth_desc"))
                                     .font(.system(size: 11.5))
                                     .foregroundColor(.secondary)
                                 
                                 HStack(spacing: 12) {
-                                    Button("前往系统设置授权「辅助功能」 ↗") {
+                                    Button(L10n("pref.hotkey.goto_accessibility")) {
                                         GlobalHotkeyManager.requestAccessibilityPermission()
                                         GlobalHotkeyManager.openAccessibilitySettings()
                                     }
                                     .buttonStyle(.borderedProminent)
                                     .controlSize(.small)
                                     
-                                    Button("键盘功能键设置 ↗") {
+                                    Button(L10n("pref.hotkey.goto_keyboard")) {
                                         GlobalHotkeyManager.openKeyboardSettings()
                                     }
                                     .buttonStyle(.link)
@@ -372,10 +416,10 @@ public struct MainControlView: View {
                 }
             }
             
-            settingsCard(title: "四大金刚核心全局热键 (F1-F4 极简单键体系)") {
+            settingsCard(title: L10n("pref.hotkey.core_card")) {
                 VStack(spacing: 12) {
                     HotkeyRecorderView(
-                        title: "① 屏幕截图",
+                        title: L10n("pref.hotkey.action_screenshot"),
                         actionId: "screenshot",
                         shortcut: $config.screenshotShortcut,
                         config: config
@@ -386,7 +430,7 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HotkeyRecorderView(
-                        title: "② 选区翻译",
+                        title: L10n("pref.hotkey.action_translate"),
                         actionId: "translate",
                         shortcut: $config.translateShortcut,
                         config: config
@@ -397,7 +441,7 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HotkeyRecorderView(
-                        title: "③ 剪贴板贴图",
+                        title: L10n("pref.hotkey.action_pin"),
                         actionId: "pin",
                         shortcut: $config.pinShortcut,
                         config: config
@@ -408,7 +452,7 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HotkeyRecorderView(
-                        title: "④ 隐藏/显示所有贴图",
+                        title: L10n("pref.hotkey.action_toggle_pins"),
                         actionId: "togglePins",
                         shortcut: $config.togglePinsShortcut,
                         config: config
@@ -418,13 +462,13 @@ public struct MainControlView: View {
                 }
             }
             
-            settingsCard(title: "快捷键录制提示") {
+            settingsCard(title: L10n("pref.hotkey.tips_card")) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 6) {
                         Image(systemName: "hand.tap")
                             .font(.system(size: 11))
                             .foregroundColor(.accentColor)
-                        Text("系统默认已全面升级为 F1-F4 极简单功能键体系，单键直达无需组合键。")
+                        Text(L10n("pref.hotkey.tip1"))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -432,7 +476,7 @@ public struct MainControlView: View {
                         Image(systemName: "escape")
                             .font(.system(size: 11))
                             .foregroundColor(.accentColor)
-                        Text("点击按键框后可录制任意按键或功能键（F1-F12）；按 Esc 键可退出录制，按 ⌫ 清空。")
+                        Text(L10n("pref.hotkey.tip2"))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -440,7 +484,7 @@ public struct MainControlView: View {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.system(size: 11))
                             .foregroundColor(.yellow)
-                        Text("如录入的按键已分配给其他功能，输入框将自动标红警示并提示冲突来源。")
+                        Text(L10n("pref.hotkey.tip3"))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -453,14 +497,14 @@ public struct MainControlView: View {
     
     private var captureSettingsView: some View {
         VStack(spacing: 16) {
-            settingsCard(title: "放大镜取色器") {
+            settingsCard(title: L10n("pref.capture.loupe_card")) {
                 VStack(spacing: 12) {
-                    toggleRow(title: "开启十字线中心取色放大镜跟随", isOn: $config.showLoupe)
+                    toggleRow(title: L10n("pref.capture.show_loupe"), isOn: $config.showLoupe)
                     
                     Divider().opacity(0.3)
                     
                     HStack {
-                        Text("默认取色色彩格式")
+                        Text(L10n("pref.capture.color_format"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.loupeColorFormat) {
@@ -478,10 +522,10 @@ public struct MainControlView: View {
                 }
             }
             
-            settingsCard(title: "标注默认样式预设") {
+            settingsCard(title: L10n("pref.capture.preset_card")) {
                 VStack(spacing: 12) {
                     HStack {
-                        Text("默认画笔主色调")
+                        Text(L10n("pref.capture.stroke_color"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         HStack(spacing: 8) {
@@ -520,13 +564,13 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HStack {
-                        Text("默认线条粗细")
+                        Text(L10n("pref.capture.stroke_width"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.defaultStrokeWidth) {
-                            Text("细 (2px)").tag(CGFloat(2.0))
-                            Text("中 (4px)").tag(CGFloat(4.0))
-                            Text("粗 (6px)").tag(CGFloat(6.0))
+                            Text(L10n("pref.capture.stroke_thin")).tag(CGFloat(2.0))
+                            Text(L10n("pref.capture.stroke_medium")).tag(CGFloat(4.0))
+                            Text(L10n("pref.capture.stroke_thick")).tag(CGFloat(6.0))
                         }
                         .pickerStyle(.segmented)
                         .controlSize(.small)
@@ -538,8 +582,8 @@ public struct MainControlView: View {
                 }
             }
             
-            settingsCard(title: "快捷动作") {
-                toggleRow(title: "完成截图时自动上屏贴图 (无需点击图钉按钮)", isOn: $config.autoPinAfterCapture)
+            settingsCard(title: L10n("pref.capture.quick_action")) {
+                toggleRow(title: L10n("pref.capture.auto_pin"), isOn: $config.autoPinAfterCapture)
             }
         }
     }
@@ -548,21 +592,21 @@ public struct MainControlView: View {
     
     private var pinningSettingsView: some View {
         VStack(spacing: 16) {
-            settingsCard(title: "贴图窗口视觉外观") {
+            settingsCard(title: L10n("pref.pin.appearance_card")) {
                 VStack(spacing: 12) {
-                    toggleRow(title: "启用贴图紫蓝光感悬浮阴影 (Apple Intelligence 风格)", isOn: $config.pinWindowBorder)
+                    toggleRow(title: L10n("pref.pin.border"), isOn: $config.pinWindowBorder)
                     Divider().opacity(0.3)
-                    toggleRow(title: "启用贴图窗口高级柔和悬浮阴影", isOn: $config.pinWindowShadow)
+                    toggleRow(title: L10n("pref.pin.shadow"), isOn: $config.pinWindowShadow)
                     Divider().opacity(0.3)
-                    toggleRow(title: "启用贴图窗口抗锯齿平滑圆角", isOn: $config.pinWindowRoundedCorners)
+                    toggleRow(title: L10n("pref.pin.corners"), isOn: $config.pinWindowRoundedCorners)
                 }
             }
             
-            settingsCard(title: "贴图交互与控制") {
+            settingsCard(title: L10n("pref.pin.controls_card")) {
                 VStack(spacing: 12) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("默认初始透明度")
+                            Text(L10n("pref.pin.alpha"))
                                 .font(.system(size: 13, weight: .regular))
                             Text("\(Int(config.pinInitialAlpha * 100))%")
                                 .font(.system(size: 11))
@@ -582,13 +626,13 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HStack {
-                        Text("双击贴图窗口行为")
+                        Text(L10n("pref.pin.double_click"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.doubleClickPinAction) {
-                            Text("1:1 缩放").tag("zoom")
-                            Text("关闭贴图").tag("close")
-                            Text("标注贴图").tag("annotate")
+                            Text(L10n("pref.pin.action_zoom")).tag("zoom")
+                            Text(L10n("pref.pin.action_close")).tag("close")
+                            Text(L10n("pref.pin.action_annotate")).tag("annotate")
                         }
                         .pickerStyle(.segmented)
                         .controlSize(.small)
@@ -600,14 +644,14 @@ public struct MainControlView: View {
                 }
             }
             
-            settingsCard(title: "贴图神技指南") {
+            settingsCard(title: L10n("pref.pin.guide_card")) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("• 自由缩放：鼠标滚轮 或 双指捏合手势（10% ~ 800%）")
-                    Text("• 调节透明度：Ctrl + 滚轮，或按键盘数字键 1~9 (0 恢复 100%)")
-                    Text("• 1:1 还原：按键盘数字 0 键，一秒恢复原始 1:1 分辨率")
-                    Text("• 外部拖拽：按住 ⌘ 拖动贴图，可作为文件直接丢入微信或访达")
-                    Text("• 磁吸拼合：按住 ⇧ 拖动贴图吸附到临近贴图边缘拼接融合")
-                    Text("• 二次标注：在贴图上右键选择「🎨 标注贴图」随时补画框写字")
+                    Text(L10n("pref.pin.guide1"))
+                    Text(L10n("pref.pin.guide2"))
+                    Text(L10n("pref.pin.guide3"))
+                    Text(L10n("pref.pin.guide4"))
+                    Text(L10n("pref.pin.guide5"))
+                    Text(L10n("pref.pin.guide6"))
                 }
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
@@ -619,10 +663,10 @@ public struct MainControlView: View {
     
     private var ocrSettingsView: some View {
         VStack(spacing: 16) {
-            settingsCard(title: "Apple Vision 离线文字识别") {
+            settingsCard(title: L10n("pref.ocr.vision_card")) {
                 VStack(spacing: 12) {
                     HStack {
-                        Text("优先识别语言")
+                        Text(L10n("pref.ocr.preferred_lang"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: Binding(
@@ -632,11 +676,11 @@ public struct MainControlView: View {
                                 config.save()
                             }
                         )) {
-                            Text("简体中文 + 英文").tag("zh-Hans")
-                            Text("繁体中文 + 英文").tag("zh-Hant")
-                            Text("纯英文 (English)").tag("en-US")
-                            Text("日语 + 英文").tag("ja-JP")
-                            Text("韩语 + 英文").tag("ko-KR")
+                            Text(L10n("pref.ocr.lang_zh_hans")).tag("zh-Hans")
+                            Text(L10n("pref.ocr.lang_zh_hant")).tag("zh-Hant")
+                            Text(L10n("pref.ocr.lang_en_us")).tag("en-US")
+                            Text(L10n("pref.ocr.lang_ja_jp")).tag("ja-JP")
+                            Text(L10n("pref.ocr.lang_ko_kr")).tag("ko-KR")
                         }
                         .pickerStyle(.menu)
                         .controlSize(.small)
@@ -644,19 +688,19 @@ public struct MainControlView: View {
                     
                     Divider().opacity(0.3)
                     
-                    toggleRow(title: "文字识别完成后自动复制文本到剪贴板", isOn: $config.autoCopyOCRText)
+                    toggleRow(title: L10n("pref.ocr.auto_copy"), isOn: $config.autoCopyOCRText)
                 }
             }
             
-            settingsCard(title: "智能翻译引擎") {
+            settingsCard(title: L10n("pref.ocr.engine_card")) {
                 VStack(spacing: 14) {
                     HStack {
-                        Text("服务提供商")
+                        Text(L10n("pref.ocr.provider"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.translationProvider) {
-                            Text("Apple 官方翻译 (系统原生)").tag("apple")
-                            Text("DeepL 官方 API (高精度)").tag("deepl")
+                            Text(L10n("pref.ocr.provider_apple")).tag("apple")
+                            Text(L10n("pref.ocr.provider_deepl")).tag("deepl")
                         }
                         .pickerStyle(.menu)
                         .controlSize(.small)
@@ -675,14 +719,14 @@ public struct MainControlView: View {
                                 .padding(.top, 1)
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Apple 离线翻译语言包")
+                                Text(L10n("pref.ocr.apple_offline_title"))
                                     .font(.system(size: 13, weight: .medium))
-                                Text("Apple 原生翻译依赖系统下载的离线语言包。若尚未下载，SnipSnap 将自动切换至在线多通道备用；您亦可前往 macOS 系统设置一键下载所有语言包。")
+                                Text(L10n("pref.ocr.apple_offline_desc"))
                                     .font(.system(size: 11.5))
                                     .foregroundColor(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                                 
-                                Button("打开「系统设置 > 语言与地区」管理语言包 ↗") {
+                                Button(L10n("pref.ocr.open_system_lang")) {
                                     InPlaceTranslateViewModel.openSystemTranslationSettings()
                                 }
                                 .buttonStyle(.link)
@@ -698,10 +742,10 @@ public struct MainControlView: View {
                         
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
-                                Text("DeepL API Key")
+                                Text(L10n("pref.ocr.deepl_key"))
                                     .font(.system(size: 13, weight: .regular))
                                 Spacer()
-                                SecureField("在此输入 DeepL 认证密钥", text: $config.deeplAuthKey)
+                                SecureField(L10n("pref.ocr.deepl_placeholder"), text: $config.deeplAuthKey)
                                     .textFieldStyle(.roundedBorder)
                                     .controlSize(.small)
                                     .frame(width: 200)
@@ -719,9 +763,9 @@ public struct MainControlView: View {
                             
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("免费版 API 终端 (api-free.deepl.com)")
+                                    Text(L10n("pref.ocr.deepl_free_endpoint"))
                                         .font(.system(size: 13, weight: .regular))
-                                    Text("DeepL 免费版 Key 通常以 :fx 结尾，系统已支持自动适配")
+                                    Text(L10n("pref.ocr.deepl_free_desc"))
                                         .font(.system(size: 10.5))
                                         .foregroundColor(.secondary)
                                 }
@@ -745,7 +789,7 @@ public struct MainControlView: View {
                                         } else {
                                             Image(systemName: "network")
                                         }
-                                        Text(isTestingDeepL ? "正在测试..." : "测试连接")
+                                        Text(isTestingDeepL ? L10n("pref.ocr.deepl_testing") : L10n("pref.ocr.deepl_test_btn"))
                                     }
                                 }
                                 .buttonStyle(.bordered)
@@ -772,7 +816,7 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HStack {
-                        Text("默认目标语言")
+                        Text(L10n("pref.ocr.target_lang"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.targetTranslateLanguage) {
@@ -798,7 +842,7 @@ public struct MainControlView: View {
                         Image(systemName: "info.circle.fill")
                             .foregroundColor(.accentColor)
                             .font(.system(size: 12))
-                        Text("智能语言匹配：截图中检测到中文将自动翻译为英文；检测到外文将自动翻译为中文。卡片内支持一键双向互换。")
+                        Text(L10n("pref.ocr.smart_tip"))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -874,8 +918,8 @@ public struct MainControlView: View {
         openPanel.canChooseFiles = false
         openPanel.canChooseDirectories = true
         openPanel.allowsMultipleSelection = false
-        openPanel.prompt = "选择"
-        openPanel.title = "选择默认截图存储文件夹"
+        openPanel.prompt = L10n("pref.general.choose_panel_btn")
+        openPanel.title = L10n("pref.general.choose_panel_title")
         
         openPanel.begin { response in
             if response == .OK, let url = openPanel.url {

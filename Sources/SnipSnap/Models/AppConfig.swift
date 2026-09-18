@@ -5,6 +5,7 @@ public struct AppConfig: Codable, Equatable {
     public static let shared = AppConfig()
     
     // MARK: - 1. General (通用设置)
+    public var language: String = "system" // "system", "zhHans", "en", "ja", "ko"
     public var launchAtLogin: Bool = false
     public var menuBarIconMonochrome: Bool = false
     public var playSoundEffect: Bool = true
@@ -51,6 +52,7 @@ public struct AppConfig: Codable, Equatable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.language = (try? container.decodeIfPresent(String.self, forKey: .language)) ?? "system"
         self.launchAtLogin = (try? container.decodeIfPresent(Bool.self, forKey: .launchAtLogin)) ?? false
         self.menuBarIconMonochrome = (try? container.decodeIfPresent(Bool.self, forKey: .menuBarIconMonochrome)) ?? false
         self.playSoundEffect = (try? container.decodeIfPresent(Bool.self, forKey: .playSoundEffect)) ?? true

@@ -14,6 +14,13 @@ public class MenuBarController: NSObject, NSMenuDelegate {
     
     private override init() {
         super.init()
+        NotificationCenter.default.addObserver(self, selector: #selector(languageDidChange), name: I18n.languageDidChangeNotification, object: nil)
+    }
+    
+    @objc private func languageDidChange() {
+        DispatchQueue.main.async { [weak self] in
+            self?.rebuildMenu()
+        }
     }
     
     public func setupMenuBar() {
@@ -25,49 +32,55 @@ public class MenuBarController: NSObject, NSMenuDelegate {
                 image.isTemplate = true
                 button.image = image
             }
-            button.toolTip = "SnipSnap - 原生截图与极致贴图"
+        }
+        rebuildMenu()
+    }
+    
+    public func rebuildMenu() {
+        if let button = statusItem?.button {
+            button.toolTip = L10n("menu.tooltip")
         }
         
         let menu = NSMenu()
         menu.delegate = self
         
         // 1. Core Actions
-        let snap = makeMenuItem(title: "屏幕截图", icon: "camera.viewfinder", action: #selector(actionScreenshot))
+        let snap = makeMenuItem(title: L10n("menu.screenshot"), icon: "camera.viewfinder", action: #selector(actionScreenshot))
         self.snapItem = snap
         menu.addItem(snap)
         
-        let pin = makeMenuItem(title: "剪贴板贴图", icon: "pin", action: #selector(actionPinClipboard))
+        let pin = makeMenuItem(title: L10n("menu.pin_clipboard"), icon: "pin", action: #selector(actionPinClipboard))
         self.pinItem = pin
         menu.addItem(pin)
         
-        let translate = makeMenuItem(title: "选区翻译", icon: "translate", action: #selector(actionSelectionTranslate))
+        let translate = makeMenuItem(title: L10n("menu.selection_translate"), icon: "translate", action: #selector(actionSelectionTranslate))
         self.ocrItem = translate
         menu.addItem(translate)
         
         menu.addItem(NSMenuItem.separator())
         
         // 3. Pin Window Management (Dynamic)
-        let togglePins = makeMenuItem(title: "隐藏所有贴图", icon: "eye.slash", action: #selector(actionTogglePins))
+        let togglePins = makeMenuItem(title: L10n("menu.hide_all_pins"), icon: "eye.slash", action: #selector(actionTogglePins))
         self.togglePinsItem = togglePins
         menu.addItem(togglePins)
         
-        let unlockPins = makeMenuItem(title: "解锁所有穿透贴图", icon: "lock.open", action: #selector(actionUnlockAllPins))
+        let unlockPins = makeMenuItem(title: L10n("menu.unlock_all_pins"), icon: "lock.open", action: #selector(actionUnlockAllPins))
         self.unlockPinsItem = unlockPins
         menu.addItem(unlockPins)
         
-        let closePins = makeMenuItem(title: "关闭所有贴图", icon: "xmark.circle", action: #selector(actionCloseAllPins))
+        let closePins = makeMenuItem(title: L10n("menu.close_all_pins"), icon: "xmark.circle", action: #selector(actionCloseAllPins))
         self.closePinsItem = closePins
         menu.addItem(closePins)
         
         menu.addItem(NSMenuItem.separator())
         
         // 4. Preferences & Quit
-        let prefItem = makeMenuItem(title: "偏好设置...", icon: "gearshape", action: #selector(actionPreferences), keyEquivalent: ",", modifiers: [.command])
+        let prefItem = makeMenuItem(title: L10n("menu.preferences"), icon: "gearshape", action: #selector(actionPreferences), keyEquivalent: ",", modifiers: [.command])
         menu.addItem(prefItem)
         
         menu.addItem(NSMenuItem.separator())
         
-        let quitItem = makeMenuItem(title: "退出 SnipSnap", icon: "power", action: #selector(actionQuit), keyEquivalent: "q", modifiers: [.command])
+        let quitItem = makeMenuItem(title: L10n("menu.quit"), icon: "power", action: #selector(actionQuit), keyEquivalent: "q", modifiers: [.command])
         menu.addItem(quitItem)
         
         statusItem.menu = menu
@@ -86,20 +99,20 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         
         // Dynamic pin controls
         if pinCount > 0 {
-            closePinsItem?.title = "关闭所有贴图 (\(pinCount))"
+            closePinsItem?.title = "\(L10n("menu.close_all_pins")) (\(pinCount))"
             closePinsItem?.isEnabled = true
             
-            togglePinsItem?.title = pinMgr.arePinsHidden ? "显示所有贴图" : "隐藏所有贴图"
+            togglePinsItem?.title = pinMgr.arePinsHidden ? L10n("menu.show_all_pins") : L10n("menu.hide_all_pins")
             setMenuItemIcon(togglePinsItem, symbol: pinMgr.arePinsHidden ? "eye" : "eye.slash")
             togglePinsItem?.isEnabled = true
             
             let hasPassThrough = pinMgr.pinWindows.contains { $0.isMousePassThrough }
             unlockPinsItem?.isEnabled = hasPassThrough
         } else {
-            closePinsItem?.title = "关闭所有贴图"
+            closePinsItem?.title = L10n("menu.close_all_pins")
             closePinsItem?.isEnabled = false
             
-            togglePinsItem?.title = "隐藏所有贴图"
+            togglePinsItem?.title = L10n("menu.hide_all_pins")
             setMenuItemIcon(togglePinsItem, symbol: "eye.slash")
             togglePinsItem?.isEnabled = false
             

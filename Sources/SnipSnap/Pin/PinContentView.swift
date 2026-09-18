@@ -405,7 +405,7 @@ public class PinContentView: NSView, AnnotationToolbarDelegate, AnnotationCanvas
         let menu = NSMenu(title: "PinMenu")
         
         // --- 分组 1: 核心智能 ---
-        let translateItem = NSMenuItem(title: "翻译", action: #selector(menuActionTranslate), keyEquivalent: "")
+        let translateItem = NSMenuItem(title: L10n("menu.selection_translate"), action: #selector(menuActionTranslate), keyEquivalent: "")
         translateItem.target = self
         menu.addItem(translateItem)
         
@@ -413,7 +413,7 @@ public class PinContentView: NSView, AnnotationToolbarDelegate, AnnotationCanvas
         
         // --- 分组 2: 编辑与变换 ---
         let annotateItem = NSMenuItem(
-            title: isAnnotating ? "退出标注模式" : "标注贴图",
+            title: isAnnotating ? L10n("pin.menu.exit_annotate") : L10n("pin.menu.annotate"),
             action: #selector(menuActionToggleAnnotation),
             keyEquivalent: ""
         )
@@ -421,40 +421,40 @@ public class PinContentView: NSView, AnnotationToolbarDelegate, AnnotationCanvas
         menu.addItem(annotateItem)
         
         // 子菜单: 图像变换
-        let transformMenu = NSMenu(title: "图像变换")
+        let transformMenu = NSMenu(title: L10n("pin.menu.transform"))
         
-        let rotateCWItem = NSMenuItem(title: "顺时针旋转 90°", action: #selector(menuActionRotate), keyEquivalent: "r")
+        let rotateCWItem = NSMenuItem(title: L10n("pin.menu.rotate_cw"), action: #selector(menuActionRotate), keyEquivalent: "r")
         rotateCWItem.target = self
         transformMenu.addItem(rotateCWItem)
         
-        let rotateCCWItem = NSMenuItem(title: "逆时针旋转 90°", action: #selector(menuActionRotateCCW), keyEquivalent: "r")
+        let rotateCCWItem = NSMenuItem(title: L10n("pin.menu.rotate_ccw"), action: #selector(menuActionRotateCCW), keyEquivalent: "r")
         rotateCCWItem.keyEquivalentModifierMask = [.shift]
         rotateCCWItem.target = self
         transformMenu.addItem(rotateCCWItem)
         
-        let flipHItem = NSMenuItem(title: "水平翻转", action: #selector(menuActionFlipH), keyEquivalent: "h")
+        let flipHItem = NSMenuItem(title: L10n("pin.menu.flip_h"), action: #selector(menuActionFlipH), keyEquivalent: "h")
         flipHItem.target = self
         transformMenu.addItem(flipHItem)
         
-        let flipVItem = NSMenuItem(title: "垂直翻转", action: #selector(menuActionFlipV), keyEquivalent: "v")
+        let flipVItem = NSMenuItem(title: L10n("pin.menu.flip_v"), action: #selector(menuActionFlipV), keyEquivalent: "v")
         flipVItem.target = self
         transformMenu.addItem(flipVItem)
         
         transformMenu.addItem(NSMenuItem.separator())
         
-        let resetItem = NSMenuItem(title: "恢复 1:1 原始比例", action: #selector(menuActionResetResolution), keyEquivalent: "0")
+        let resetItem = NSMenuItem(title: L10n("pin.menu.reset_resolution"), action: #selector(menuActionResetResolution), keyEquivalent: "0")
         resetItem.target = self
         transformMenu.addItem(resetItem)
         
         let thumbItem = NSMenuItem(
-            title: isThumbnail ? "展开为原图" : "折叠为缩略图",
+            title: isThumbnail ? L10n("pin.menu.expand_thumb") : L10n("pin.menu.collapse_thumb"),
             action: #selector(menuActionToggleThumbnail),
             keyEquivalent: "t"
         )
         thumbItem.target = self
         transformMenu.addItem(thumbItem)
         
-        let transformSubmenuItem = NSMenuItem(title: "图像变换", action: nil, keyEquivalent: "")
+        let transformSubmenuItem = NSMenuItem(title: L10n("pin.menu.transform"), action: nil, keyEquivalent: "")
         transformSubmenuItem.submenu = transformMenu
         menu.addItem(transformSubmenuItem)
         
@@ -462,10 +462,10 @@ public class PinContentView: NSView, AnnotationToolbarDelegate, AnnotationCanvas
         
         // --- 分组 3: 窗口与交互 ---
         // 子菜单: 窗口透明度
-        let opacityMenu = NSMenu(title: "窗口透明度")
+        let opacityMenu = NSMenu(title: L10n("pin.menu.opacity"))
         let currentAlpha = window?.alphaValue ?? 1.0
         let opacityLevels: [(Double, String)] = [
-            (1.0, "100% (不透明)"),
+            (1.0, "100%"),
             (0.8, "80%"),
             (0.6, "60%"),
             (0.4, "40%"),
@@ -480,11 +480,11 @@ public class PinContentView: NSView, AnnotationToolbarDelegate, AnnotationCanvas
             }
             opacityMenu.addItem(item)
         }
-        let opacitySubmenuItem = NSMenuItem(title: "窗口透明度", action: nil, keyEquivalent: "")
+        let opacitySubmenuItem = NSMenuItem(title: L10n("pin.menu.opacity"), action: nil, keyEquivalent: "")
         opacitySubmenuItem.submenu = opacityMenu
         menu.addItem(opacitySubmenuItem)
         
-        let passThroughItem = NSMenuItem(title: "鼠标穿透", action: #selector(menuActionTogglePassThrough), keyEquivalent: "l")
+        let passThroughItem = NSMenuItem(title: L10n("pin.menu.passthrough"), action: #selector(menuActionTogglePassThrough), keyEquivalent: "l")
         passThroughItem.keyEquivalentModifierMask = .command
         passThroughItem.target = self
         if let win = window as? PinWindow, win.isMousePassThrough {
@@ -492,7 +492,7 @@ public class PinContentView: NSView, AnnotationToolbarDelegate, AnnotationCanvas
         }
         menu.addItem(passThroughItem)
         
-        let shadowItem = NSMenuItem(title: "切换悬浮阴影", action: #selector(menuActionToggleShadow), keyEquivalent: "")
+        let shadowItem = NSMenuItem(title: L10n("pin.menu.shadow"), action: #selector(menuActionToggleShadow), keyEquivalent: "")
         shadowItem.target = self
         if isBorderEnabled || (window as? PinWindow)?.hasShadow == true {
             shadowItem.state = .on
@@ -502,19 +502,19 @@ public class PinContentView: NSView, AnnotationToolbarDelegate, AnnotationCanvas
         menu.addItem(NSMenuItem.separator())
         
         // --- 分组 4: 导出与关闭 ---
-        let copyItem = NSMenuItem(title: "复制图片", action: #selector(menuActionCopy), keyEquivalent: "c")
+        let copyItem = NSMenuItem(title: L10n("pin.menu.copy"), action: #selector(menuActionCopy), keyEquivalent: "c")
         copyItem.keyEquivalentModifierMask = .command
         copyItem.target = self
         menu.addItem(copyItem)
         
-        let saveItem = NSMenuItem(title: "存储图片为...", action: #selector(menuActionSave), keyEquivalent: "s")
+        let saveItem = NSMenuItem(title: L10n("pin.menu.save_as"), action: #selector(menuActionSave), keyEquivalent: "s")
         saveItem.keyEquivalentModifierMask = .command
         saveItem.target = self
         menu.addItem(saveItem)
         
         menu.addItem(NSMenuItem.separator())
         
-        let closeItem = NSMenuItem(title: "关闭贴图", action: #selector(menuActionClose), keyEquivalent: "\u{1b}")
+        let closeItem = NSMenuItem(title: L10n("pin.menu.close"), action: #selector(menuActionClose), keyEquivalent: "\u{1b}")
         closeItem.target = self
         menu.addItem(closeItem)
         
