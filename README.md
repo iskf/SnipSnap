@@ -9,6 +9,8 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/iskf/SnipSnap/releases/latest"><img src="https://img.shields.io/github/v/release/iskf/SnipSnap?style=flat-square&color=0071e3&label=Release" alt="Latest Release" /></a>
+  <a href="#1-homebrew-cask-recommended"><img src="https://img.shields.io/badge/Homebrew-Cask-fbb040?style=flat-square&logo=homebrew" alt="Homebrew Cask" /></a>
   <a href="https://apple.com"><img src="https://img.shields.io/badge/macOS-14.0%2B-1c1c1e?style=flat-square&logo=apple" alt="macOS 14.0+" /></a>
   <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5.9%20%2F%206.0-F05138?style=flat-square&logo=swift" alt="Swift 5.9 / 6.0" /></a>
   <img src="https://img.shields.io/badge/Architecture-Universal%20(Apple%20Silicon%20%2F%20Intel)-0071e3?style=flat-square" alt="Apple Silicon & Intel" />
@@ -182,32 +184,55 @@ SnipSnap/
 
 ---
 
-## Building & Installation
+## Installation
 
-### Prerequisites
-- macOS 14.0 (Sonoma) or macOS 15.0+ (Sequoia recommended)
+### 1. Homebrew Cask (Recommended)
+
+Install via the official tap with a single command:
+
+```bash
+brew install --cask iskf/snipsnap/snipsnap
+```
+
+Or add the tap first:
+
+```bash
+brew tap iskf/snipsnap
+brew install --cask snipsnap
+```
+
+To update in the future:
+
+```bash
+brew upgrade --cask snipsnap
+```
+
+### 2. Manual Download (DMG)
+
+1. Download the latest `SnipSnap-1.0.0.dmg` from [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest).
+2. Open the DMG image and drag `SnipSnap.app` into your `/Applications` folder.
+3. Launch SnipSnap from Launchpad or Spotlight.
+
+### 3. Build from Source
+
+#### Prerequisites
+- macOS 14.0 (Sonoma) or macOS 15.0+ (Sequoia)
 - Xcode 15.0+ or Command Line Tools (`xcode-select --install`)
 - Swift 5.9+ toolchain
 
-### Build from Source
-
+#### Build Steps
 1. Clone the repository:
    ```bash
    git clone https://github.com/iskf/SnipSnap.git
    cd SnipSnap
    ```
 
-2. Compile in Release configuration:
-   ```bash
-   swift build -c release
-   ```
-
-3. Package into a signed `.app` bundle:
+2. Compile and package the application:
    ```bash
    ./build_app.sh
    ```
 
-4. Launch the application:
+3. Launch the application:
    ```bash
    open build/SnipSnap.app
    ```

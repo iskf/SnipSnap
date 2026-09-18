@@ -9,6 +9,8 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/iskf/SnipSnap/releases/latest"><img src="https://img.shields.io/github/v/release/iskf/SnipSnap?style=flat-square&color=0071e3&label=Release" alt="最新版本" /></a>
+  <a href="#1-通过-homebrew-cask-安装推荐"><img src="https://img.shields.io/badge/Homebrew-Cask-fbb040?style=flat-square&logo=homebrew" alt="Homebrew Cask" /></a>
   <a href="https://apple.com"><img src="https://img.shields.io/badge/macOS-14.0%2B-1c1c1e?style=flat-square&logo=apple" alt="macOS 14.0+" /></a>
   <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5.9%20%2F%206.0-F05138?style=flat-square&logo=swift" alt="Swift 5.9 / 6.0" /></a>
   <img src="https://img.shields.io/badge/架构-Universal%20(Apple%20Silicon%20%2F%20Intel)-0071e3?style=flat-square" alt="Apple Silicon & Intel" />
@@ -182,32 +184,55 @@ SnipSnap/
 
 ---
 
-## 编译与安装
+## 安装与使用
+ 
+### 1. 通过 Homebrew Cask 安装（推荐）
 
-### 系统要求
-- macOS 14.0 (Sonoma) 或更高版本 *(推荐 macOS 15.0+ Sequoia 以获得 Apple 原生翻译框架完整体验)*
+通过 SnipSnap 官方 Tap 一行命令直接安装：
+
+```bash
+brew install --cask iskf/snipsnap/snipsnap
+```
+
+或先添加 Tap 后安装：
+
+```bash
+brew tap iskf/snipsnap
+brew install --cask snipsnap
+```
+
+后续如有新版本，可执行快速升级：
+
+```bash
+brew upgrade --cask snipsnap
+```
+
+### 2. 手动下载 DMG 镜像
+
+1. 前往 [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest) 下载最新的 `SnipSnap-1.0.0.dmg`。
+2. 双击打开 DMG，将 `SnipSnap.app` 拖入 `/Applications`（应用程序）文件夹。
+3. 在启动台（Launchpad）或 Spotlight 聚焦搜索中启动 SnipSnap。
+
+### 3. 从源码编译运行
+
+#### 系统环境要求
+- macOS 14.0 (Sonoma) 或更高版本 *(推荐 macOS 15.0+ Sequoia 以获得原生翻译框架完整体验)*
 - Xcode 15.0+ 或 Swift 5.9+ 命令行工具链
 - Apple Silicon (M1/M2/M3/M4) 或 Intel 架构 Mac
 
-### 从源码编译运行
-
+#### 编译打包步骤
 1. 克隆本仓库：
    ```bash
    git clone https://github.com/iskf/SnipSnap.git
    cd SnipSnap
    ```
 
-2. 使用 Swift Package Manager 编译 Release 版本：
-   ```bash
-   swift build -c release
-   ```
-
-3. 打包生成带有本地签名的 `.app` 应用程序：
+2. 自动构建并打包带有本地签名的 `.app` 应用程序：
    ```bash
    ./build_app.sh
    ```
 
-4. 启动应用：
+3. 启动应用：
    ```bash
    open build/SnipSnap.app
    ```
