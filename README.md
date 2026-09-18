@@ -83,7 +83,7 @@ Unlike heavy Electron-based screen utilities that consume hundreds of megabytes 
 - **Detached Annotation Toolbar**: Secondary annotations (shapes, arrows, mosaics, text) reside on an independent floating toolbar, eliminating canvas edge clipping.
 - **Text-to-Card Conversion**: Press `F3` when code or text is copied; SnipSnap formats and renders it into a high-contrast code card pinned directly to the screen.
 
-### 2. GIF Screen Recording  *(New in v1.1.0)*
+### 2. GIF Screen Recording  *(New in v1.0.2)*
 - **Region-Selective Recording**: Select any screen region and record it directly to an optimized GIF animation, ready to paste or share.
 - **Constant Frame Rate (CFR) Engine**: Rock-solid 15 FPS capture via `DispatchSourceTimer` ensures buttery-smooth playback with no fast-forwarding or frame drops.
 - **ScreenCaptureKit Integration**: Uses Apple's modern `SCStream` API for hardware-accelerated, low-overhead screen capture with precise region cropping.
@@ -147,7 +147,7 @@ Unlike heavy Electron-based screen utilities that consume hundreds of megabytes 
 | `Enter` | Complete annotation and copy to clipboard |
 | `Esc` | Cancel / Dismiss current capture or tool |
 
-### GIF Recording  *(New in v1.1.0)*
+### GIF Recording  *(New in v1.0.2)*
 
 | Shortcut | Action |
 | :--- | :--- |
@@ -231,7 +231,7 @@ brew upgrade --cask snipsnap
 
 ### 2. Manual Download (DMG)
 
-1. Download the latest `SnipSnap-1.1.0.dmg` from [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest).
+1. Download the latest `SnipSnap-1.0.2.dmg` from [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest).
 2. Open the DMG image and drag `SnipSnap.app` into your `/Applications` folder.
 3. Launch SnipSnap from Launchpad or Spotlight.
 
