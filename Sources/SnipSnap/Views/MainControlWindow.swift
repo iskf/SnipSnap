@@ -44,13 +44,18 @@ public class MainControlWindowController: NSWindowController {
     public static var shared: MainControlWindowController?
     public var viewModel: MainControlViewModel = MainControlViewModel()
     
-    public static func show(tab: ControlCenterSubTab = .general) {
-        if let existing = shared, let window = existing.window {
+    public static func preload() {
+        DispatchQueue.main.async {
+            guard shared == nil else { return }
+            _ = getOrCreateController(tab: .general)
+        }
+    }
+    
+    @discardableResult
+    private static func getOrCreateController(tab: ControlCenterSubTab) -> MainControlWindowController {
+        if let existing = shared {
             existing.viewModel.selectedTab = tab
-            existing.showWindow(nil)
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
+            return existing
         }
         
         let window = NSWindow(
@@ -72,7 +77,14 @@ public class MainControlWindowController: NSWindowController {
         let controller = MainControlWindowController(window: window)
         controller.viewModel = vm
         shared = controller
+        return controller
+    }
+    
+    public static func show(tab: ControlCenterSubTab = .general) {
+        let controller = getOrCreateController(tab: tab)
+        controller.viewModel.selectedTab = tab
         controller.showWindow(nil)
+        controller.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 }
@@ -87,6 +99,7 @@ public struct MainControlView: View {
     @State private var isTestingDeepL: Bool = false
     @State private var deeplTestSuccess: Bool = false
     @State private var accessibilityGranted: Bool = GlobalHotkeyManager.isAccessibilityGranted
+    @State private var hoveredTab: ControlCenterSubTab? = nil
     
     public init(viewModel: MainControlViewModel) {
         self.viewModel = viewModel
@@ -143,10 +156,11 @@ public struct MainControlView: View {
             VStack(spacing: 2) {
                 ForEach(ControlCenterSubTab.allCases) { tab in
                     let isSelected = viewModel.selectedTab == tab
+                    let isHovered = hoveredTab == tab && !isSelected
+                    
                     Button(action: {
-                        withAnimation(.easeInOut(duration: 0.12)) {
-                            viewModel.selectedTab = tab
-                        }
+                        // Instant zero-latency tab switch without heavy interpolation
+                        viewModel.selectedTab = tab
                     }) {
                         HStack(spacing: 7) {
                             // Apple Settings Badge: 18x18 rounded rect with white SF Symbol
@@ -167,13 +181,18 @@ public struct MainControlView: View {
                             Spacer()
                         }
                         .padding(.horizontal, 6)
-                        .padding(.vertical, 3.5)
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
                         .background(
                             RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                .fill(isSelected ? Color.accentColor : Color.clear)
+                                .fill(isSelected ? Color.accentColor : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
                         )
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        hoveredTab = hovering ? tab : nil
+                    }
                 }
             }
             .padding(.horizontal, 8)

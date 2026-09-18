@@ -28,6 +28,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         // Restore persistent pinned windows from previous session
         PinWindowManager.shared.restoreSavedPins()
         
+        // Preload Preferences window hierarchy in background for zero-latency opening
+        MainControlWindowController.preload()
+        
         // Show visible main control center window on launch
         DispatchQueue.main.async {
             if CommandLine.arguments.contains("--hotkeys") {
