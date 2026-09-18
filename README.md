@@ -1,19 +1,19 @@
 # SnipSnap
 
 <p align="center">
-  <img src="Resources/AppIcon.png" width="128" height="128" alt="SnipSnap Logo" />
+  <img src="Resources/AppIcon.png" width="120" height="120" alt="SnipSnap Icon" />
 </p>
 
 <p align="center">
-  <b>A blazing-fast, privacy-first, macOS native screenshot, pixel-perfect pinning, offline OCR, and in-place screen translation tool.</b>
+  <b>A lightweight, privacy-focused native macOS utility for precision screenshots, stepless pinning, on-device OCR, and in-place screen translation.</b>
 </p>
 
 <p align="center">
-  <a href="https://apple.com"><img src="https://img.shields.io/badge/macOS-14.0%2B-black?style=flat-square&logo=apple" alt="macOS 14.0+" /></a>
-  <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5.9%20%2F%206.0-orange?style=flat-square&logo=swift" alt="Swift 5.9 / 6.0" /></a>
-  <img src="https://img.shields.io/badge/Arch-Universal%20(Apple%20Silicon%20%2F%20Intel)-blue?style=flat-square" alt="Apple Silicon & Intel" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License MIT" /></a>
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome" />
+  <a href="https://apple.com"><img src="https://img.shields.io/badge/macOS-14.0%2B-1c1c1e?style=flat-square&logo=apple" alt="macOS 14.0+" /></a>
+  <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5.9%20%2F%206.0-F05138?style=flat-square&logo=swift" alt="Swift 5.9 / 6.0" /></a>
+  <img src="https://img.shields.io/badge/Architecture-Universal%20(Apple%20Silicon%20%2F%20Intel)-0071e3?style=flat-square" alt="Apple Silicon & Intel" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-34c759?style=flat-square" alt="License MIT" /></a>
+  <img src="https://img.shields.io/badge/Contributions-Welcome-28cd41?style=flat-square" alt="Contributions Welcome" />
 </p>
 
 <p align="center">
@@ -22,229 +22,191 @@
 
 ---
 
-<p align="center">
-  <img src="docs/images/hero_pin.png" width="520" alt="SnipSnap Floating Pin & Advanced Context Menu" />
-  <br />
-  <sub>📌 Floating Overlay · Apple Intelligence Ambient Glow · Native Context Actions</sub>
-</p>
+## Overview
+
+**SnipSnap** is designed from the ground up for macOS using Apple native frameworks: **Swift, AppKit, SwiftUI, Vision, and the Translation framework**.
+
+Unlike heavy Electron-based screen utilities that consume hundreds of megabytes of memory, SnipSnap launches instantly, idles with near-zero resource utilization, and operates without mandatory cloud dependencies. It combines the tactile pinning workflow popularized by *Snipaste* with Apple Human Interface Guidelines, subtle illumination styling, and Safari-inspired in-place translation.
 
 ---
 
-## 💡 Overview
+## Interface Previews
 
-**SnipSnap** is built from the ground up for macOS using pure native technologies: **Swift, AppKit, SwiftUI, Apple Vision, and the Apple Translation framework**. 
-
-Unlike heavy Electron-based screen tools that consume hundreds of megabytes of RAM, SnipSnap launches instantly, idles with near-zero memory footprint, and requires zero external cloud dependencies. It brings the beloved, tactile pinning experience of *Snipaste* together with modern macOS Tahoe/Sonoma/Sequoia aesthetic standards, Apple Intelligence glow styling, and Safari-inspired in-place translation.
-
----
-
-## 🖼️ Interface Previews
-
-| 📸 Precision Capture & Grouped Toolbar | 🌐 Safari-Style In-Place Screen Translation |
+| Precision Capture & Grouped Toolbar | Safari-Style In-Place Screen Translation |
 | :---: | :---: |
-| <img src="docs/images/annotation_toolbar.png" alt="Precision Viewfinder & Grouped Toolbar" width="460" /> | <img src="docs/images/inplace_translation.png" alt="In-Place Translation" width="460" /> |
-| **Pixel-level reticle · 8x Loupe color picker · Divider-grouped toolbar** | **Offline Apple Vision OCR · In-situ replacement · [Original\|Translation] switcher** |
+| <img src="docs/images/annotation_toolbar.png" alt="Precision Viewfinder and Grouped Toolbar" width="460" /> | <img src="docs/images/inplace_translation.png" alt="In-Place Translation" width="460" /> |
+| **Pixel-level reticle · 8x loupe inspector · Divider-grouped toolbar** | **On-device Vision OCR · Contextual replacement · Zero-latency toggle** |
 
-| 📌 Pixel-Perfect Floating Pin & Actions | ⚙️ macOS Native Control Center |
+| Desktop Floating Pin & Context Menu | macOS Native Preferences Panel |
 | :---: | :---: |
-| <img src="docs/images/hero_pin.png" alt="Floating Pin & Context Menu" width="460" /> | <img src="docs/images/control_center.png" alt="Native Control Center" width="460" /> |
-| **Independent NSPanel · Apple Intelligence glow · Right-click power menu** | **Pure Swift/AppKit architecture · Global hotkey recorder · Zero idle overhead** |
+| <img src="docs/images/hero_pin.png" alt="Desktop Floating Pin and Context Menu" width="460" /> | <img src="docs/images/control_center.png" alt="Native Control Center" width="460" /> |
+| **Independent NSPanel · Ambient glow · Comprehensive right-click actions** | **Swift/AppKit architecture · Global hotkey recorder · Menu bar resident** |
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 1. 📌 Superior Pinning Experience (*Snipaste Reimagined*)
-- **Independent Floating Panel**: Pins stay on top across all Spaces, workspaces, and full-screen apps for seamless reference while coding or designing.
-- **Fluid Zooming**: Smooth, stepless zooming from **10% to 800%** using mouse scroll wheel or two-finger trackpad pinch gestures.
+### 1. Pinning System
+- **Independent Floating Window**: Pinned images float across all virtual desktops, Spaces, and full-screen windows for persistent reference during development and design.
+- **Stepless Zoom**: Smooth scaling from **10% to 800%** using the mouse scroll wheel or trackpad pinch gestures.
 - **Opacity Control**: Instant opacity adjustment using `Ctrl + Scroll` or direct number keys `1`–`9` (`0` restores 100% opacity).
-- **Stepped Rotation & Mirroring**: Rotate in 90° increments with `R`, flip horizontally with `H`, or flip vertically with `V` with adaptive canvas re-centering.
-- **🛡️ Mouse Pass-Through (Lock Mode)**: Toggle with `⌘L` or right-click to let mouse clicks pass straight through the pinned image to underlying applications.
-- **External Floating Annotation Toolbar**: Secondary annotations (arrows, rectangles, mosaics, text) open on a dedicated floating panel attached to the pin, ensuring zero canvas clipping.
-- **Clipboard Text to Card**: Press `F3` when text or code snippets are copied; SnipSnap automatically formats and renders them into an elegant, styled code/text card pinned to your screen.
+- **Geometric Transformations**: Rotate clockwise in 90-degree steps (`R`), flip horizontally (`H`), or flip vertically (`V`) with automated viewport re-centering.
+- **Mouse Pass-Through (Lock Mode)**: Toggle with `Command + L` or the context menu to let mouse events pass straight through to underlying applications.
+- **Detached Annotation Toolbar**: Secondary annotations (shapes, arrows, mosaics, text) reside on an independent floating toolbar, eliminating canvas edge clipping.
+- **Text-to-Card Conversion**: Press `F3` when code or text is copied; SnipSnap formats and renders it into a high-contrast code card pinned directly to the screen.
 
-### 2. 🌐 In-Place Screen Translation (*Safari Style*)
-- **In-Situ Text Replacement**: Selected text is seamlessly translated and rendered directly over the original screen context without opening separate query windows.
-- **Apple Intelligence Radiant Glow**: Features an ambient violet-blue radiant breathing glow outline around active translation frames.
-- **Native Segmented Switcher `[ Original | Translation ]`**: Instant, zero-latency toggling between source and translated text.
-- **Unified Frosted Glass Language Pair `[ Source ⇄ Target ▾ ]`**: On-the-fly language dropdown menu supporting English, Simplified Chinese, Japanese, Korean, French, German, Spanish, and Russian, with an instant one-click swap button (`⇄`).
-- **Tri-Tier Translation Architecture**:
-  1. **Apple Official Native Translation Engine** (macOS 15+ Sequoia offline models)
-  2. **DeepL Official API** (User-configured high-accuracy neural translation)
-  3. **Multi-Channel Fallback** (Instant failover with built-in circuit breaker)
-- **Graceful Unrecognized Handling**: When text is blurry or empty, the original screenshot remains 100% visible and unblemished, accompanied by a gentle warning pill and retry action.
+### 2. In-Place Screen Translation
+- **In-Situ Text Replacement**: Selected screen text is recognized and replaced directly over the original visual context without external popups.
+- **Native Segmented Switcher**: Instant switching between source text and translated results via mouse click or the `Space` key.
+- **Language Pair Switcher**: Live dropdown supporting English, Simplified Chinese, Japanese, Korean, French, German, Spanish, and Russian, with single-click translation direction inversion (`<->`).
+- **Multi-Tier Translation Engine**:
+  1. **Apple Translation Framework**: On-device neural machine translation (macOS 15+ Sequoia).
+  2. **DeepL Official API**: Optional user-provided API key for academic and professional translation accuracy.
+  3. **High-Availability Fallback**: Automatic route failover ensuring uninterrupted service.
+- **Non-Obtrusive Fallback**: If text recognition yields empty or low-confidence results, the original screenshot remains 100% visible and unblemished.
 
-### 3. 🔍 100% Offline, Privacy-First OCR
-- **Apple Vision Framework**: Optical character recognition is computed entirely on-device using Apple Neural Engine / GPU acceleration.
-- **Zero Data Leakage**: Your screen contents never touch third-party servers.
-- **Mixed-Language Support**: Accurately recognizes mixed English, Chinese, Japanese, Korean, Latin, and punctuation.
-- **Smart Typographic Normalization**: Automatically repairs line breaks—merging soft-wrapped English sentences with single spaces while joining wrapped Chinese lines without awkward gaps.
+### 3. On-Device Offline OCR
+- **Apple Vision Framework**: Text detection and optical character recognition run locally via the Apple Neural Engine and GPU.
+- **Data Privacy**: Screen contents are processed entirely in-memory and never transmitted to external cloud endpoints.
+- **Multilingual Recognition**: Accurate extraction across Latin, CJK (Chinese, Japanese, Korean), and mixed typographic symbols.
+- **Typographic Line-Break Reconstruction**: Automatically connects soft-wrapped English words with single spaces while joining wrapped Chinese lines without superfluous gaps.
 
-### 4. 🎨 Complete Vector Annotation Toolkit
-- **High-Contrast Grouped Toolbar**: Divided into 3 distinct functional clusters separated by crisp vertical divider lines:
-  - **Annotation Tools**: Rectangle (`R`), Ellipse (`O`), Line (`L`), Arrow (`A`), Freehand Pen (`P`), Highlighter (`H`), Text (`T`), Pixelated Mosaic/Blur (`M`), Auto-Increment Counter Stamps ① ② ③ (`N`).
-  - **History Controls**: Unlimited Undo (`⌘Z`) and Redo (`⇧⌘Z`).
-  - **Session Actions**: Cancel (`Esc`), Save As (`⌘S`), Pin (`F3`), Done & Copy to Clipboard (`Enter`).
-- **Color Palette & Stroke Sizes**: Quick presets (Red, Blue, Green, Orange, Purple, Yellow, White, Black) with 3 adjustable stroke weights.
+### 4. Vector Annotation Toolkit
+- **High-Contrast Grouped Toolbar**: Organized into 3 discrete functional groups separated by vertical dividers:
+  - **Drawing Tools**: Rectangle (`R`), Ellipse (`O`), Line (`L`), Arrow (`A`), Brush (`P`), Highlighter (`H`), Text (`T`), Mosaic (`M`), Numbered Steps (`N`).
+  - **History**: Unlimited Undo (`Command + Z`) and Redo (`Shift + Command + Z`).
+  - **Actions**: Cancel (`Esc`), Save File (`Command + S`), Pin (`F3`), Done and Copy (`Enter`).
+- **Secondary Attribute Palette**: 8 curated color swatches and 3 stroke weight presets, seamlessly docked adjacent to the active tool.
 
-### 5. 🔍 Pixel-Level Loupe & Color Picker
-- **Real-Time 8x Magnifier**: Precision cursor tracking displaying a pixel grid with central reticle guide.
-- **RGB / HEX Inspection**: Instant display of pixel coordinates and hexadecimal color codes.
-- **One-Click Copy**: Press `C` to copy the current HEX color code directly to your clipboard.
+### 5. Precision Loupe & Color Inspector
+- **Real-Time 8x Magnifier**: Precise cursor tracking displaying an amplified pixel grid with a center target.
+- **RGB and HEX Readout**: Live coordinate and hexadecimal color inspection under the reticle.
+- **One-Key Copy**: Press `C` to copy the inspected color code directly to the system clipboard.
 
-### 6. ⚙️ Apple-Native Preferences & Global Hotkeys
-- **Compact Native Sidebar**: Designed in strict accordance with Apple Human Interface Guidelines, featuring 160pt compact sidebar and SF Pro typography.
-- **Customizable Shortcuts**: Carbon-level low-latency global hotkey registration for instant response even in heavy games or full-screen IDEs.
-- **Lightweight Menu Bar Resident**: Lives silently in the menu bar with no dock clutter.
+### 6. System Integration & Preferences
+- **Standard Preferences Window**: Conforms to macOS design principles with a 160pt compact navigation column and SF Pro typography.
+- **Carbon Hotkey Tap**: Low-latency global keyboard shortcuts operating reliably even across full-screen games or IDEs.
+- **Accessory Run Mode**: Operates as a menu bar resident without cluttering the macOS Dock.
 
 ---
 
-## ⌨️ Keyboard Shortcuts Cheat Sheet
+## Keyboard Shortcuts
 
-### 📸 Capture & Annotation
+### Capture & Annotation
 
 | Shortcut | Action |
 | :--- | :--- |
-| `F1` / `⌥ A` | Start screen capture |
-| `F2` / `⌥ O` | Area OCR & Screen Translation |
-| `F3` / `⌥ P` | Pin image or convert clipboard text to card |
+| `F1` / `Option + A` | Start screen capture |
+| `F2` / `Option + O` | Area OCR and in-place translation |
+| `F3` / `Option + P` | Pin image or convert clipboard text to card |
 | `F4` | Quick translate clipboard text |
 | `C` | Copy HEX color under cursor (Loupe mode) |
-| `⌘ Z` | Undo annotation |
-| `⇧ ⌘ Z` | Redo annotation |
-| `⌘ S` | Save screenshot to file (Elevated modal dialog) |
-| `Enter` | Complete annotation & copy image to clipboard |
-| `Esc` | Cancel / Exit current capture or tool |
+| `Command + Z` | Undo annotation |
+| `Shift + Command + Z` | Redo annotation |
+| `Command + S` | Save image to file |
+| `Enter` | Complete annotation and copy to clipboard |
+| `Esc` | Cancel / Dismiss current capture or tool |
 
-### 📌 Pinned Window
+### Pinned Window
 
 | Interaction | Action |
 | :--- | :--- |
-| **Scroll / Pinch** | Smooth zoom in / out (10% ~ 800%) |
-| `Ctrl + Scroll` / `1`–`9` | Adjust opacity (10% ~ 90%); `0` restores 100% |
-| `R` | Rotate 90° clockwise |
+| **Scroll / Pinch** | Stepless zoom (10% to 800%) |
+| `Ctrl + Scroll` / `1`–`9` | Adjust opacity (10% to 90%); `0` resets to 100% |
+| `R` | Rotate 90 degrees clockwise |
 | `H` | Flip horizontally |
 | `V` | Flip vertically |
-| `⌘ L` | Toggle mouse pass-through (Lock mode) |
-| `Double Click` | Close pinned window |
-| `Right Click` | Open contextual menu (Secondary annotation, opacity, etc.) |
+| `Command + L` | Toggle mouse pass-through (Lock mode) |
+| **Double Click** | Dismiss pinned window |
+| **Right Click** | Open context menu (Annotation, Transform, Resolution, etc.) |
 
-### 🌐 In-Place Translation HUD
+### In-Place Translation HUD
 
 | Interaction | Action |
 | :--- | :--- |
-| `Space` | Toggle between Original and Translated text |
-| `Click [ ⇄ ]` | Swap source and target languages instantly |
-| `Target Menu ▾` | Switch target language (English, Chinese, Japanese, etc.) |
-| `Click 复制` | Copy translated text to clipboard |
-| `Esc` / Click Outside | Dismiss translation overlay |
+| `Space` | Toggle between original and translated text |
+| `Click [ <-> ]` | Swap source and target languages |
+| `Target Language Menu` | Select target language |
+| `Copy Button` | Copy translated text to clipboard |
+| `Esc` / Click Outside | Close translation overlay |
 
 ---
 
-## 🏗️ Architecture & Project Structure
+## Architecture & Project Structure
 
 ```
 SnipSnap/
-├── Package.swift                          # SPM Project manifest
-├── build_app.sh                           # Production bundle & code signing script
+├── Package.swift                          # Swift Package Manager manifest
+├── build_app.sh                           # Application bundle build & signing script
 ├── Resources/
-│   ├── AppIcon.icns                       # Application icon
-│   └── Info.plist                         # Bundle configuration & permissions
+│   ├── AppIcon.icns                       # macOS application icon
+│   └── Info.plist                         # Bundle properties & system permissions
 └── Sources/
     └── SnipSnap/
-        ├── App/                           # App lifecycle, NSApplicationDelegate, MenuBar
-        │   ├── SnipSnapApp.swift
-        │   ├── AppDelegate.swift
-        │   └── MenuBarController.swift
-        ├── Capture/                       # Full-screen overlay, window detection, loupe
-        │   ├── ScreenCaptureService.swift
-        │   ├── CaptureOverlayWindow.swift
-        │   └── CaptureOverlayView.swift
-        ├── Annotation/                    # Canvas renderer, vector elements, grouped toolbar
-        │   ├── AnnotationCanvasView.swift
-        │   ├── AnnotationToolbarView.swift
-        │   └── ColorPalette.swift
+        ├── App/                           # Lifecycle, NSApplicationDelegate, MenuBar
+        ├── Capture/                       # Screen capture overlay, loupe, selection
+        ├── Annotation/                    # Canvas renderer, vector elements, toolbars
         ├── Pin/                           # Pinned NSPanel, external toolbar, cardifier
-        │   ├── PinWindowManager.swift
-        │   ├── PinWindow.swift
-        │   └── PinContentView.swift
-        ├── Translation/                   # In-place HUD, Apple Translation, DeepL, fallback
-        │   ├── InPlaceTranslateHUDView.swift
-        │   ├── TranslateFloatingWindow.swift
-        │   └── TranslationService.swift
-        ├── OCR/                           # Vision.framework offline text recognizer
-        │   ├── VisionOCRService.swift
-        │   └── OCRResultWindow.swift
-        ├── Hotkeys/                       # Carbon-based global hotkey manager
-        │   └── GlobalHotkeyManager.swift
-        ├── Models/                        # App configuration, annotations, OCR models
-        │   ├── AppConfig.swift
-        │   └── AnnotationElement.swift
-        └── Views/                         # Native SwiftUI preferences, loupe magnifier
-            ├── MainControlWindow.swift
-            └── LoupeMagnifierView.swift
+        ├── Translation/                   # In-place HUD, Apple Translation, DeepL
+        ├── OCR/                           # Apple Vision framework offline OCR
+        ├── Hotkeys/                       # Carbon & CGEventTap hotkey manager
+        ├── Models/                        # App configuration, annotations, history
+        └── Views/                         # Native SwiftUI preferences, loupe view
 ```
 
 ---
 
-## 🛠️ Building & Installation
+## Building & Installation
 
-### Requirements
-- **macOS 14.0 (Sonoma)** or later *(macOS 15.0+ Sequoia recommended for Apple Native Translation framework)*
-- **Xcode 15.0+** or Swift 5.9+ toolchain
-- **Apple Silicon (M1/M2/M3/M4) or Intel Mac**
+### Prerequisites
+- macOS 14.0 (Sonoma) or macOS 15.0+ (Sequoia recommended)
+- Xcode 15.0+ or Command Line Tools (`xcode-select --install`)
+- Swift 5.9+ toolchain
 
 ### Build from Source
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/SnipSnap.git
+   git clone https://github.com/iskf/SnipSnap.git
    cd SnipSnap
    ```
 
-2. Build debug binary via Swift Package Manager:
+2. Compile in Release configuration:
    ```bash
-   swift build
+   swift build -c release
    ```
 
-3. Package into `.app` bundle and sign with your local developer identity:
+3. Package into a signed `.app` bundle:
    ```bash
    ./build_app.sh
    ```
 
-4. Launch SnipSnap:
+4. Launch the application:
    ```bash
    open build/SnipSnap.app
    ```
 
 ---
 
-## 🔒 Permissions & Privacy
+## Permissions & Privacy
 
-SnipSnap is designed with strict privacy standards:
-- **Screen Recording Permission**: Required by macOS to capture screen contents. Prompted automatically on first launch or accessible via `System Settings -> Privacy & Security -> Screen & System Audio Recording`.
-- **Accessibility Permission**: Required for registering low-latency global keyboard shortcuts (`F1`–`F4`). Accessible via `System Settings -> Privacy & Security -> Accessibility`.
-- **No Analytics / No Tracking**: SnipSnap collects zero telemetries and sends no network requests, unless you explicitly configure a third-party translation provider like DeepL.
-
----
-
-## 🤝 Contributing
-
-Contributions, feature suggestions, and pull requests are warmly welcomed!
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+SnipSnap is built with a strict local-first philosophy:
+- **Screen Recording Permission**: Required by macOS to capture screen buffer pixels. Requested on first launch or accessible via `System Settings -> Privacy & Security -> Screen & System Audio Recording`.
+- **Accessibility Permission**: Required for intercepting global hotkeys (`F1`–`F4`) system-wide. Accessible via `System Settings -> Privacy & Security -> Accessibility`.
+- **Zero Telemetry**: SnipSnap collects no metrics, transmits no tracking telemetry, and makes no network requests unless you explicitly activate third-party translation services like DeepL.
 
 ---
 
-## 📄 License
+## Contributing
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+Contributions, issues, and feature requests are welcome. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for architecture guidelines, code conventions, and pull request workflows.
 
 ---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 <p align="center">
-  Crafted with ❤️ for macOS power users, developers, and designers.
+  <sub>Designed for macOS power users, developers, and designers.</sub>
 </p>
