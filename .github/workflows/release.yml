@@ -1,0 +1,138 @@
+name: Release & Homebrew Cask
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: get_version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building SnipSnap version: ${VERSION}"
+
+      - name: Build Application Binary
+        run: |
+          # Build release binary for Apple Silicon & Intel (Universal)
+          swift build -c release --arch arm64 --arch x86_64 || swift build -c release
+
+      - name: Assemble SnipSnap.app Bundle
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          APP_DIR="build/SnipSnap.app"
+          rm -rf build
+          mkdir -p "$APP_DIR/Contents/MacOS"
+          mkdir -p "$APP_DIR/Contents/Resources"
+          
+          # Find compiled executable
+          if [ -f ".build/apple/Products/Release/SnipSnap" ]; then
+            cp ".build/apple/Products/Release/SnipSnap" "$APP_DIR/Contents/MacOS/SnipSnap"
+          else
+            cp ".build/release/SnipSnap" "$APP_DIR/Contents/MacOS/SnipSnap"
+          fi
+          chmod +x "$APP_DIR/Contents/MacOS/SnipSnap"
+          
+          # Copy plist & icons
+          cp "Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+          if [ -f "Resources/AppIcon.icns" ]; then
+            cp "Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
+          fi
+          if [ -f "Resources/AppIcon.png" ]; then
+            cp "Resources/AppIcon.png" "$APP_DIR/Contents/Resources/AppIcon.png"
+          fi
+          
+          # Inject version into Info.plist
+          plutil -replace CFBundleShortVersionString -string "$VERSION" "$APP_DIR/Contents/Info.plist"
+          plutil -replace CFBundleVersion -string "$VERSION" "$APP_DIR/Contents/Info.plist"
+
+      - name: Package DMG & Calculate SHA256
+        id: package_dmg
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          DMG_NAME="SnipSnap-${VERSION}.dmg"
+          DMG_STAGING="build/dmg_staging"
+          
+          mkdir -p "$DMG_STAGING"
+          cp -R "build/SnipSnap.app" "$DMG_STAGING/"
+          ln -s /Applications "$DMG_STAGING/Applications"
+          
+          hdiutil create -volname "SnipSnap" -srcfolder "$DMG_STAGING" -ov -format UDZO "build/${DMG_NAME}"
+          
+          cd build
+          shasum -a 256 "${DMG_NAME}" > "${DMG_NAME}.sha256"
+          SHA256_VAL=$(awk '{print $1}' "${DMG_NAME}.sha256")
+          echo "DMG SHA256: ${SHA256_VAL}"
+          echo "SHA256=${SHA256_VAL}" >> $GITHUB_OUTPUT
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "SnipSnap v${{ steps.get_version.outputs.VERSION }}"
+          files: |
+            build/SnipSnap-${{ steps.get_version.outputs.VERSION }}.dmg
+            build/SnipSnap-${{ steps.get_version.outputs.VERSION }}.dmg.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+
+      - name: Update Homebrew Cask Tap
+        if: env.TAP_TOKEN != ''
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          SHA256: ${{ steps.package_dmg.outputs.SHA256 }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          echo "Cloning iskf/homebrew-snipsnap repository..."
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/iskf/homebrew-snipsnap.git" tap
+          cd tap
+          
+          cat << EOF > Casks/snipsnap.rb
+          cask "snipsnap" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "https://github.com/iskf/SnipSnap/releases/download/v#{version}/SnipSnap-#{version}.dmg"
+            name "SnipSnap"
+            desc "Native macOS screenshot, pinning, OCR, and Safari-style in-place translation tool"
+            homepage "https://github.com/iskf/SnipSnap"
+
+            depends_on macos: ">= :sonoma"
+
+            app "SnipSnap.app"
+
+            zap trash: [
+              "~/Library/Application Support/SnipSnap",
+              "~/Library/Caches/com.snipsnap.app",
+              "~/Library/Preferences/com.snipsnap.app.plist",
+            ]
+          end
+          EOF
+          
+          # Fix indent formatting
+          sed -i '' 's/^          //' Casks/snipsnap.rb
+          
+          git add Casks/snipsnap.rb
+          if git diff --staged --quiet; then
+            echo "No changes detected in Casks/snipsnap.rb"
+          else
+            git commit -m "feat: bump snipsnap to v${VERSION}"
+            git push origin main
+            echo "Successfully updated iskf/homebrew-snipsnap to v${VERSION}!"
+          fi
