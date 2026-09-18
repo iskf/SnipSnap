@@ -44,7 +44,7 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     public var captureMode: CaptureMode = .normal {
         didSet {
             if captureMode == .translate {
-                magnifierView.customTipText = "框选翻译区域 (Esc退出)"
+                magnifierView.customTipText = L10n("capture.translate_tip")
             } else {
                 magnifierView.customTipText = nil
             }
@@ -908,12 +908,12 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
                 stack.centerYAnchor.constraint(equalTo: hub.centerYAnchor)
             ])
             
-            let btnCopy = NSButton(title: "📋 复制全部文本", target: self, action: #selector(btnOCRCopyAllClicked))
+            let btnCopy = NSButton(title: "📋 " + L10n("ocr.copy_all"), target: self, action: #selector(btnOCRCopyAllClicked))
             btnCopy.bezelStyle = .inline
             btnCopy.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
             stack.addArrangedSubview(btnCopy)
             
-            let btnTrans = NSButton(title: "🌐 对照翻译", target: self, action: #selector(btnOCRTranslateClicked))
+            let btnTrans = NSButton(title: "🌐 " + L10n("ocr.translate"), target: self, action: #selector(btnOCRTranslateClicked))
             btnTrans.bezelStyle = .inline
             btnTrans.font = NSFont.systemFont(ofSize: 11, weight: .medium)
             stack.addArrangedSubview(btnTrans)
@@ -998,7 +998,7 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
                         vm?.startTranslation(with: ocr.fullText)
                     case .failure(let err):
                         vm?.isLoading = false
-                        vm?.errorMessage = "文字识别失败: \(err.localizedDescription)"
+                        vm?.errorMessage = "\(L10n("ocr.recognize_fail")): \(err.localizedDescription)"
                     }
                 }
             }
@@ -1063,7 +1063,7 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
             case .success(let ocr):
                 self.showInPlaceOCR(ocr: ocr)
             case .failure(let err):
-                let empty = OCRResult(fullText: "识别失败: \(err.localizedDescription)")
+                let empty = OCRResult(fullText: "\(L10n("ocr.recognize_fail")): \(err.localizedDescription)")
                 self.showInPlaceOCR(ocr: empty)
             }
         }

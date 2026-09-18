@@ -50,23 +50,31 @@ public class InPlaceTranslateViewModel: ObservableObject {
     public var onCopyFinished: (() -> Void)?
     public var onRetryOCR: (() -> Void)?
     
-    public static let supportedLanguages: [(code: String, name: String, shortName: String)] = [
-        ("zh-Hans", "中文 (简体)", "中"),
-        ("en", "英语 (English)", "英"),
-        ("ja", "日语 (日本語)", "日"),
-        ("ko", "韩语 (한국어)", "韩"),
-        ("fr", "法语 (Français)", "法"),
-        ("de", "德语 (Deutsch)", "德"),
-        ("es", "西班牙语 (Español)", "西"),
-        ("ru", "俄语 (Русский)", "俄")
+    public static let supportedLanguages: [(code: String, nameKey: String, shortKey: String)] = [
+        ("zh-Hans", "lang.zh_hans", "lang.short.zh"),
+        ("en", "lang.en", "lang.short.en"),
+        ("ja", "lang.ja", "lang.short.ja"),
+        ("ko", "lang.ko", "lang.short.ko"),
+        ("fr", "lang.fr", "lang.short.fr"),
+        ("de", "lang.de", "lang.short.de"),
+        ("es", "lang.es", "lang.short.es"),
+        ("ru", "lang.ru", "lang.short.ru")
     ]
+    
+    public func languageName(for code: String) -> String {
+        let normalized = Self.normalizeLanguageCode(code)
+        if let item = Self.supportedLanguages.first(where: { $0.code == normalized }) {
+            return L10n(item.nameKey)
+        }
+        return code
+    }
     
     public var sourceLanguageShortName: String {
         if sourceLang == "auto" {
             if !detectedSourceLang.isEmpty && detectedSourceLang != "auto" {
                 return shortName(for: detectedSourceLang)
             }
-            return "自动"
+            return L10n("translate.auto")
         }
         return shortName(for: sourceLang)
     }
@@ -74,22 +82,14 @@ public class InPlaceTranslateViewModel: ObservableObject {
     public var sourceLanguageDisplayName: String {
         if sourceLang == "auto" {
             if !detectedSourceLang.isEmpty && detectedSourceLang != "auto" {
-                return "自动 (\(shortName(for: detectedSourceLang)))"
+                return "\(L10n("translate.auto")) (\(shortName(for: detectedSourceLang)))"
             }
-            return "自动"
-        }
-        let normalized = Self.normalizeLanguageCode(sourceLang)
-        if let match = Self.supportedLanguages.first(where: { $0.code == normalized }) {
-            return match.shortName + "文"
+            return L10n("translate.auto")
         }
         return shortName(for: sourceLang)
     }
     
     public var targetLanguageDisplayName: String {
-        let normalized = Self.normalizeLanguageCode(targetLang)
-        if let match = Self.supportedLanguages.first(where: { $0.code == normalized }) {
-            return match.shortName + "文"
-        }
         return shortName(for: targetLang)
     }
     
@@ -99,14 +99,9 @@ public class InPlaceTranslateViewModel: ObservableObject {
     
     public func shortName(for code: String) -> String {
         let normalized = Self.normalizeLanguageCode(code)
-        if normalized.hasPrefix("zh") { return "中" }
-        if normalized.hasPrefix("en") { return "英" }
-        if normalized.hasPrefix("ja") { return "日" }
-        if normalized.hasPrefix("ko") { return "韩" }
-        if normalized.hasPrefix("fr") { return "法" }
-        if normalized.hasPrefix("de") { return "德" }
-        if normalized.hasPrefix("es") { return "西" }
-        if normalized.hasPrefix("ru") { return "俄" }
+        if let item = Self.supportedLanguages.first(where: { $0.code == normalized }) {
+            return L10n(item.shortKey)
+        }
         return String(code.prefix(2)).uppercased()
     }
     
@@ -461,7 +456,7 @@ public class InPlaceTranslateViewModel: ObservableObject {
         pb.clearContents()
         pb.setString(textToCopy, forType: .string)
         NSSound(named: "Tink")?.play()
-        showToast("已复制译文")
+        showToast(L10n("translate.copied"))
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
             self?.onCopyFinished?()
@@ -474,7 +469,7 @@ public class InPlaceTranslateViewModel: ObservableObject {
         pb.clearContents()
         pb.setString(originalText, forType: .string)
         NSSound(named: "Tink")?.play()
-        showToast("已复制原文")
+        showToast(L10n("translate.copied"))
     }
     
     private func showToast(_ msg: String) {
@@ -552,7 +547,7 @@ private struct OriginalTranslatedSegmentedPicker: View {
                     viewModel.toggleShowingOriginal()
                 }
             }) {
-                Text("原文")
+                Text(L10n("translate.tab.original"))
                     .font(.system(size: 10, weight: viewModel.isShowingOriginal ? .semibold : .regular))
                     .foregroundColor(viewModel.isShowingOriginal ? .white : Color.white.opacity(0.55))
                     .padding(.horizontal, 7)
@@ -571,7 +566,7 @@ private struct OriginalTranslatedSegmentedPicker: View {
                     viewModel.toggleShowingOriginal()
                 }
             }) {
-                Text("译文")
+                Text(L10n("translate.tab.translated"))
                     .font(.system(size: 10, weight: !viewModel.isShowingOriginal ? .semibold : .regular))
                     .foregroundColor(!viewModel.isShowingOriginal ? .white : Color.white.opacity(0.55))
                     .padding(.horizontal, 7)
@@ -592,7 +587,7 @@ private struct OriginalTranslatedSegmentedPicker: View {
                 .stroke(Color.white.opacity(0.12), lineWidth: 0.6)
         )
         .animation(.easeInOut(duration: 0.14), value: viewModel.isShowingOriginal)
-        .help("在原文与译文之间原地切换 (敲击空格键也可切换)")
+        .help(L10n("translate.switch_help"))
     }
 }
 
@@ -610,8 +605,8 @@ private struct UnifiedLanguagePairPicker: View {
                 }) {
                     HStack {
                         let autoDesc = (viewModel.detectedSourceLang != "auto" && !viewModel.detectedSourceLang.isEmpty)
-                            ? "自动检测 (\(viewModel.shortName(for: viewModel.detectedSourceLang)))"
-                            : "自动检测"
+                            ? "\(L10n("translate.auto_detect")) (\(viewModel.shortName(for: viewModel.detectedSourceLang)))"
+                            : L10n("translate.auto_detect")
                         Text(autoDesc)
                         if viewModel.sourceLang == "auto" {
                             Image(systemName: "checkmark")
@@ -626,7 +621,7 @@ private struct UnifiedLanguagePairPicker: View {
                         viewModel.changeSourceLanguage(lang.code)
                     }) {
                         HStack {
-                            Text(lang.name)
+                            Text(viewModel.languageName(for: lang.code))
                             if viewModel.sourceLang != "auto" && InPlaceTranslateViewModel.normalizeLanguageCode(viewModel.sourceLang) == lang.code {
                                 Image(systemName: "checkmark")
                             }
@@ -644,7 +639,7 @@ private struct UnifiedLanguagePairPicker: View {
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
-            .help("点击修改原语言 (当前: \(viewModel.sourceLanguageDisplayName))")
+            .help("\(L10n("translate.change_source")) (\(viewModel.sourceLanguageDisplayName))")
             
             // 2. Swap button
             Button(action: {
@@ -660,7 +655,7 @@ private struct UnifiedLanguagePairPicker: View {
             }
             .buttonStyle(.plain)
             .onHover { isSwapHovered = $0 }
-            .help("互换源语言与目标语言")
+            .help(L10n("translate.swap_help"))
             
             // 3. Target language menu
             Menu {
@@ -669,7 +664,7 @@ private struct UnifiedLanguagePairPicker: View {
                         viewModel.changeTargetLanguage(lang.code)
                     }) {
                         HStack {
-                            Text(lang.name)
+                            Text(viewModel.languageName(for: lang.code))
                             if InPlaceTranslateViewModel.normalizeLanguageCode(viewModel.targetLang) == lang.code {
                                 Image(systemName: "checkmark")
                             }
@@ -687,7 +682,7 @@ private struct UnifiedLanguagePairPicker: View {
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
-            .help("点击修改目标语言 (当前: \(viewModel.targetLanguageDisplayName))")
+            .help("\(L10n("translate.change_target")) (\(viewModel.targetLanguageDisplayName))")
         }
         .padding(1.2)
         .background(Color.white.opacity(0.08))
@@ -703,6 +698,7 @@ private struct UnifiedLanguagePairPicker: View {
 
 public struct InPlaceTranslateHUDView: View {
     @ObservedObject public var viewModel: InPlaceTranslateViewModel
+    @ObservedObject private var i18n = I18n.shared
     @State private var isBreathingGlow: Bool = false
     @State private var dragInitialOrigin: CGPoint? = nil
     
@@ -755,10 +751,10 @@ public struct InPlaceTranslateHUDView: View {
                         Image(systemName: "shippingbox.fill")
                             .font(.system(size: 8.5))
                             .foregroundColor(.orange)
-                        Text("离线包未下载")
+                        Text(L10n("translate.err.offline_missing"))
                             .font(.system(size: 9.5, weight: .medium))
                             .foregroundColor(.orange)
-                        Text("去下载 ↗")
+                        Text(L10n("translate.err.go_download"))
                             .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 4.5)
@@ -772,21 +768,21 @@ public struct InPlaceTranslateHUDView: View {
                     .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
-                .help("点击前往 macOS「语言与地区」系统设置下载翻译语言包")
+                .help(L10n("translate.err.offline_help"))
 
             case .noTextDetected:
                 HStack(spacing: 3.5) {
                     Image(systemName: "text.badge.xmark")
                         .font(.system(size: 8.5))
                         .foregroundColor(.yellow)
-                    Text("未检测到文字")
+                    Text(L10n("translate.err.no_text"))
                         .font(.system(size: 9.5, weight: .medium))
                         .foregroundColor(.yellow)
                     
                     Button(action: {
                         viewModel.retry()
                     }) {
-                        Text("重试")
+                        Text(L10n("translate.retry"))
                             .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 4.5)
@@ -795,7 +791,6 @@ public struct InPlaceTranslateHUDView: View {
                             .cornerRadius(4)
                     }
                     .buttonStyle(.plain)
-                    .help("重新框选检测并翻译")
                 }
                 .padding(.horizontal, 5.5)
                 .padding(.vertical, 2.5)
@@ -807,14 +802,14 @@ public struct InPlaceTranslateHUDView: View {
                     Image(systemName: "arrow.left.arrow.right")
                         .font(.system(size: 8.5))
                         .foregroundColor(.cyan)
-                    Text("源与目标相同")
+                    Text(L10n("translate.err.same_lang"))
                         .font(.system(size: 9.5, weight: .medium))
                         .foregroundColor(.cyan)
                     
                     Button(action: {
                         viewModel.swapLanguages()
                     }) {
-                        Text("互换")
+                        Text(L10n("translate.swap"))
                             .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 4.5)
@@ -823,7 +818,7 @@ public struct InPlaceTranslateHUDView: View {
                             .cornerRadius(4)
                     }
                     .buttonStyle(.plain)
-                    .help("互换源语言与目标语言")
+                    .help(L10n("translate.swap_help"))
                 }
                 .padding(.horizontal, 5.5)
                 .padding(.vertical, 2.5)
@@ -835,14 +830,14 @@ public struct InPlaceTranslateHUDView: View {
                     Image(systemName: "wifi.slash")
                         .font(.system(size: 8.5))
                         .foregroundColor(.red)
-                    Text("网络连接不可用")
+                    Text(L10n("translate.err.network"))
                         .font(.system(size: 9.5, weight: .medium))
                         .foregroundColor(.red)
                     
                     Button(action: {
                         viewModel.retry()
                     }) {
-                        Text("重试")
+                        Text(L10n("translate.retry"))
                             .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 4.5)
@@ -851,7 +846,6 @@ public struct InPlaceTranslateHUDView: View {
                             .cornerRadius(4)
                     }
                     .buttonStyle(.plain)
-                    .help("检查网络并重试")
                 }
                 .padding(.horizontal, 5.5)
                 .padding(.vertical, 2.5)
@@ -870,7 +864,7 @@ public struct InPlaceTranslateHUDView: View {
                     Button(action: {
                         viewModel.retry()
                     }) {
-                        Text("重试")
+                        Text(L10n("translate.retry"))
                             .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 4.5)
@@ -895,7 +889,7 @@ public struct InPlaceTranslateHUDView: View {
                             Image(systemName: "globe")
                                 .font(.system(size: 8.5))
                                 .foregroundColor(.cyan)
-                            Text("已转在线·缺离线包")
+                            Text(L10n("translate.fallback_online"))
                                 .font(.system(size: 9.5, weight: .medium))
                                 .foregroundColor(.cyan)
                             Image(systemName: "arrow.up.right")
@@ -908,14 +902,14 @@ public struct InPlaceTranslateHUDView: View {
                         .cornerRadius(6)
                     }
                     .buttonStyle(.plain)
-                    .help("因 Apple 离线语言包未安装，当前已自动降级为在线翻译。点击可前往系统设置下载离线包。")
+                    .help(L10n("translate.fallback_online_help"))
                 } else if viewModel.isUsingOnlineAutoDetection {
                     // Gentle indicator pill when low-confidence source language triggered online auto-fallback
                     HStack(spacing: 3.5) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 8.5))
                             .foregroundColor(.cyan)
-                        Text("智能在线补位")
+                        Text(L10n("translate.smart_online"))
                             .font(.system(size: 9.5, weight: .medium))
                             .foregroundColor(.cyan)
                     }
@@ -923,7 +917,7 @@ public struct InPlaceTranslateHUDView: View {
                     .padding(.vertical, 2.5)
                     .background(Color.cyan.opacity(0.15))
                     .cornerRadius(6)
-                    .help("源语种特征不明显，已启用多通道智能在线识别与翻译")
+                    .help(L10n("translate.smart_online_help"))
                 } else {
                     // Minimalist subtle engine indicator (icon only with tooltip to save horizontal space)
                     HStack(spacing: 3.5) {
@@ -939,7 +933,7 @@ public struct InPlaceTranslateHUDView: View {
                     }
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2.5)
-                    .help("当前翻译引擎: \(viewModel.engineName)")
+                    .help("\(L10n("translate.current_engine")): \(viewModel.engineName)")
                 }
             }
             
@@ -969,7 +963,7 @@ public struct InPlaceTranslateHUDView: View {
                     HStack(spacing: 3) {
                         Image(systemName: "doc.on.doc")
                             .font(.system(size: 9))
-                        Text("复制")
+                        Text(L10n("translate.copy"))
                             .font(.system(size: 10, weight: .medium))
                     }
                     .foregroundColor(Color.white.opacity(0.90))
@@ -983,7 +977,7 @@ public struct InPlaceTranslateHUDView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .help("复制译文到剪贴板")
+                .help(L10n("translate.copy_help"))
             }
             
             // 5. Close Button
@@ -998,7 +992,7 @@ public struct InPlaceTranslateHUDView: View {
                     .clipShape(Circle())
             }
             .buttonStyle(.plain)
-            .help("退出翻译 (Esc 或点击外部均可退出)")
+            .help(L10n("translate.close_help"))
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 2)

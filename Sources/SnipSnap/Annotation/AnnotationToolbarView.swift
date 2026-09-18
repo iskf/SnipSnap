@@ -118,31 +118,31 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         mainRowStack.addArrangedSubview(makeDivider(height: 14))
         
         // Group 1: 标注区 (Drawing tools with keycap badges)
-        addToolButton(.rectangle, icon: "rectangle", tip: "矩形", keycap: "R")
-        addToolButton(.ellipse, icon: "oval", tip: "椭圆", keycap: "O")
-        addToolButton(.arrow, icon: "arrow.up.right", tip: "箭头", keycap: "A")
-        addToolButton(.line, icon: "line.diagonal", tip: "直线", keycap: "L")
-        addToolButton(.brush, icon: "pencil", tip: "画笔", keycap: "P")
-        addToolButton(.highlighter, icon: "highlighter", tip: "荧光笔", keycap: "H")
-        addToolButton(.text, icon: "textformat", tip: "文字", keycap: "T")
-        addToolButton(.mosaic, icon: "checkerboard.rectangle", tip: "马赛克", keycap: "M")
-        addToolButton(.counter, icon: "1.circle", tip: "步骤序号", keycap: "N")
+        addToolButton(.rectangle, icon: "rectangle", tipKey: "toolbar.tool.rectangle", keycap: "R")
+        addToolButton(.ellipse, icon: "oval", tipKey: "toolbar.tool.ellipse", keycap: "O")
+        addToolButton(.arrow, icon: "arrow.up.right", tipKey: "toolbar.tool.arrow", keycap: "A")
+        addToolButton(.line, icon: "line.diagonal", tipKey: "toolbar.tool.line", keycap: "L")
+        addToolButton(.brush, icon: "pencil", tipKey: "toolbar.tool.brush", keycap: "P")
+        addToolButton(.highlighter, icon: "highlighter", tipKey: "toolbar.tool.highlighter", keycap: "H")
+        addToolButton(.text, icon: "textformat", tipKey: "toolbar.tool.text", keycap: "T")
+        addToolButton(.mosaic, icon: "checkerboard.rectangle", tipKey: "toolbar.tool.mosaic", keycap: "M")
+        addToolButton(.counter, icon: "1.circle", tipKey: "toolbar.tool.counter", keycap: "N")
         
         // 分割线 ｜
         mainRowStack.addArrangedSubview(makeDivider(height: 18))
         
         // Group 2: 撤销区 (Undo / Redo)
-        addActionButton(icon: "arrow.uturn.backward", tip: "撤销", keycap: "⌘Z", action: #selector(btnUndoClicked))
-        addActionButton(icon: "arrow.uturn.forward", tip: "重做", keycap: "⇧⌘Z", action: #selector(btnRedoClicked))
+        addActionButton(icon: "arrow.uturn.backward", tipKey: "toolbar.action.undo", keycap: "⌘Z", action: #selector(btnUndoClicked))
+        addActionButton(icon: "arrow.uturn.forward", tipKey: "toolbar.action.redo", keycap: "⇧⌘Z", action: #selector(btnRedoClicked))
         
         // 分割线 ｜
         mainRowStack.addArrangedSubview(makeDivider(height: 18))
         
         // Group 3: 操作区 (取消, 保存, 贴屏, 完成并复制)
-        addActionButton(icon: "xmark", tip: "取消截图", keycap: "Esc", action: #selector(btnCloseClicked))
-        addActionButton(icon: "square.and.arrow.down", tip: "保存图片", keycap: "⌘S", action: #selector(btnSaveClicked))
-        addActionButton(icon: "pin", tip: "贴到屏幕", keycap: "F3", action: #selector(btnPinClicked))
-        addActionButton(icon: "checkmark", tip: "完成并复制", keycap: "Enter", action: #selector(btnCopyClicked))
+        addActionButton(icon: "xmark", tipKey: "toolbar.action.cancel", keycap: "Esc", action: #selector(btnCloseClicked))
+        addActionButton(icon: "square.and.arrow.down", tipKey: "toolbar.action.save", keycap: "⌘S", action: #selector(btnSaveClicked))
+        addActionButton(icon: "pin", tipKey: "toolbar.action.pin", keycap: "F3", action: #selector(btnPinClicked))
+        addActionButton(icon: "checkmark", tipKey: "toolbar.action.copy", keycap: "Enter", action: #selector(btnCopyClicked))
     }
     
     // MARK: - UI Helpers
@@ -170,14 +170,14 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         return container
     }
     
-    private func addToolButton(_ tool: AnnotationToolType, icon: String, tip: String, keycap: String) {
-        let btn = ToolbarIconButton(icon: icon, tip: tip, keycap: keycap, target: self, action: #selector(toolButtonClicked(_:)))
+    private func addToolButton(_ tool: AnnotationToolType, icon: String, tipKey: String, keycap: String) {
+        let btn = ToolbarIconButton(icon: icon, tipKey: tipKey, keycap: keycap, target: self, action: #selector(toolButtonClicked(_:)))
         toolButtons[tool] = btn
         mainRowStack.addArrangedSubview(btn)
     }
     
-    private func addActionButton(icon: String, tip: String, keycap: String? = nil, action: Selector) {
-        let btn = ToolbarIconButton(icon: icon, tip: tip, keycap: keycap, target: self, action: action)
+    private func addActionButton(icon: String, tipKey: String, keycap: String? = nil, action: Selector) {
+        let btn = ToolbarIconButton(icon: icon, tipKey: tipKey, keycap: keycap, target: self, action: action)
         mainRowStack.addArrangedSubview(btn)
     }
     

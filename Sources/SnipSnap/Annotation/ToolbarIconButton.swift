@@ -1,7 +1,19 @@
 import Cocoa
 
 public class ToolbarIconButton: NSButton {
-    public var tipText: String = ""
+    public var tipKey: String? = nil
+    private var _tipText: String = ""
+    public var tipText: String {
+        get {
+            if let key = tipKey {
+                return L10n(key)
+            }
+            return _tipText
+        }
+        set {
+            _tipText = newValue
+        }
+    }
     public var keycapText: String? = nil
     public var customTint: NSColor = NSColor.white.withAlphaComponent(0.85) {
         didSet {
@@ -18,8 +30,9 @@ public class ToolbarIconButton: NSButton {
     private var trackingArea: NSTrackingArea?
     private var isHovered: Bool = false
     
-    public init(icon: String, tip: String, keycap: String? = nil, tint: NSColor = NSColor.white.withAlphaComponent(0.85), target: AnyObject?, action: Selector) {
-        self.tipText = tip
+    public init(icon: String, tip: String = "", tipKey: String? = nil, keycap: String? = nil, tint: NSColor = NSColor.white.withAlphaComponent(0.85), target: AnyObject?, action: Selector) {
+        self.tipKey = tipKey
+        self._tipText = tip
         self.keycapText = keycap
         self.customTint = tint
         

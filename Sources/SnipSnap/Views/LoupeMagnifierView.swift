@@ -230,7 +230,7 @@ public class LoupeMagnifierView: NSView {
             .font: tipFont,
             .foregroundColor: NSColor(calibratedWhite: 0.75, alpha: 1.0)
         ]
-        let tipStr = customTipText ?? "C:复制 | Shift:格式"
+        let tipStr = customTipText ?? L10n("loupe.tip")
         NSString(string: tipStr).draw(at: CGPoint(x: 12, y: 24), withAttributes: tipAttrs)
         
         // Coordinates / Size

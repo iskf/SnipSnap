@@ -366,9 +366,9 @@ public class SecondaryPaletteBubbleView: NSView {
         
         textStack.addArrangedSubview(makeDivider())
         
-        let styles = ["纯色", "描边"]
+        let styles = [L10n("palette.text.plain"), L10n("palette.text.outline")]
         let defaultStyleIdx = (selectedTextStyle == .plain) ? 0 : 1
-        let styleSeg = CapsuleSegmentedControl(items: styles, itemWidths: [38, 38], defaultIndex: defaultStyleIdx)
+        let styleSeg = CapsuleSegmentedControl(items: styles, itemWidths: [44, 44], defaultIndex: defaultStyleIdx)
         styleSeg.onSelectionChanged = { [weak self] idx in
             let style: TextStyleMode = (idx == 0) ? .plain : .outline
             self?.selectedTextStyle = style
@@ -394,7 +394,7 @@ public class SecondaryPaletteBubbleView: NSView {
         mosaicStack.spacing = 8
         
         let defaultIdx = (selectedMosaicBlockSize == 10.0) ? 0 : 1
-        let mosaicSeg = CapsuleSegmentedControl(items: ["细 10px", "粗 20px"], itemWidths: [56, 56], defaultIndex: defaultIdx)
+        let mosaicSeg = CapsuleSegmentedControl(items: [L10n("palette.mosaic.fine"), L10n("palette.mosaic.coarse")], itemWidths: [64, 64], defaultIndex: defaultIdx)
         mosaicSeg.onSelectionChanged = { [weak self] idx in
             let size: CGFloat = (idx == 0) ? 10.0 : 20.0
             self?.selectedMosaicBlockSize = size
@@ -414,7 +414,7 @@ public class SecondaryPaletteBubbleView: NSView {
         counterStack.addArrangedSubview(makeDivider())
         
         let defaultIdx = (selectedCounterStyle == .filled) ? 0 : 1
-        let styleSeg = CapsuleSegmentedControl(items: ["实心", "描边"], itemWidths: [38, 38], defaultIndex: defaultIdx)
+        let styleSeg = CapsuleSegmentedControl(items: [L10n("palette.counter.filled"), L10n("palette.counter.outline")], itemWidths: [44, 44], defaultIndex: defaultIdx)
         styleSeg.onSelectionChanged = { [weak self] idx in
             let style: CounterStyle = (idx == 0) ? .filled : .outline
             self?.selectedCounterStyle = style
@@ -673,7 +673,7 @@ public class SecondaryPaletteBubbleView: NSView {
             .font: NSFont.systemFont(ofSize: 11, weight: .bold)
         ])
         btn.attributedTitle = attrTitle
-        btn.toolTip = "重置编号为 1"
+        btn.toolTip = L10n("palette.counter.reset")
         
         btn.translatesAutoresizingMaskIntoConstraints = false
         btn.widthAnchor.constraint(equalToConstant: 40).isActive = true

@@ -856,6 +856,442 @@ public class I18n: ObservableObject {
             .en: "Save Image As...",
             .ja: "画像を保存...",
             .ko: "다른 이름으로 저장..."
+        ],
+        
+        // MARK: - Annotation Toolbar & Tools
+        "toolbar.tool.rectangle": [
+            .zhHans: "矩形",
+            .en: "Rectangle",
+            .ja: "矩形",
+            .ko: "직사각형"
+        ],
+        "toolbar.tool.ellipse": [
+            .zhHans: "椭圆",
+            .en: "Ellipse",
+            .ja: "楕円",
+            .ko: "타원"
+        ],
+        "toolbar.tool.arrow": [
+            .zhHans: "箭头",
+            .en: "Arrow",
+            .ja: "矢印",
+            .ko: "화살표"
+        ],
+        "toolbar.tool.line": [
+            .zhHans: "直线",
+            .en: "Line",
+            .ja: "直線",
+            .ko: "직선"
+        ],
+        "toolbar.tool.brush": [
+            .zhHans: "画笔",
+            .en: "Brush",
+            .ja: "ブラシ",
+            .ko: "브러시"
+        ],
+        "toolbar.tool.highlighter": [
+            .zhHans: "荧光笔",
+            .en: "Highlighter",
+            .ja: "蛍光ペン",
+            .ko: "형광펜"
+        ],
+        "toolbar.tool.text": [
+            .zhHans: "文字",
+            .en: "Text",
+            .ja: "テキスト",
+            .ko: "텍스트"
+        ],
+        "toolbar.tool.mosaic": [
+            .zhHans: "马赛克",
+            .en: "Mosaic",
+            .ja: "モザイク",
+            .ko: "모자이크"
+        ],
+        "toolbar.tool.counter": [
+            .zhHans: "步骤序号",
+            .en: "Step Counter",
+            .ja: "ステップ番号",
+            .ko: "번호 매기기"
+        ],
+        "toolbar.action.undo": [
+            .zhHans: "撤销",
+            .en: "Undo",
+            .ja: "元に戻す",
+            .ko: "실행 취소"
+        ],
+        "toolbar.action.redo": [
+            .zhHans: "重做",
+            .en: "Redo",
+            .ja: "やり直し",
+            .ko: "다시 실행"
+        ],
+        "toolbar.action.cancel": [
+            .zhHans: "取消截图",
+            .en: "Cancel Capture",
+            .ja: "キャプチャ中止",
+            .ko: "캡처 취소"
+        ],
+        "toolbar.action.save": [
+            .zhHans: "保存图片",
+            .en: "Save Image",
+            .ja: "画像を保存",
+            .ko: "이미지 저장"
+        ],
+        "toolbar.action.pin": [
+            .zhHans: "贴到屏幕",
+            .en: "Pin to Screen",
+            .ja: "画面にピン留め",
+            .ko: "화면에 고정"
+        ],
+        "toolbar.action.copy": [
+            .zhHans: "完成并复制",
+            .en: "Done & Copy",
+            .ja: "完了してコピー",
+            .ko: "완료 및 복사"
+        ],
+        "loupe.tip": [
+            .zhHans: "C:复制 | Shift:格式",
+            .en: "C: Copy | Shift: Format",
+            .ja: "C: コピー | Shift: 形式",
+            .ko: "C: 복사 | Shift: 서식"
+        ],
+        "capture.translate_tip": [
+            .zhHans: "框选翻译区域 (Esc退出)",
+            .en: "Select translation area (Esc to exit)",
+            .ja: "翻訳範囲を選択 (Escで終了)",
+            .ko: "번역 영역 선택 (Esc로 종료)"
+        ],
+        "ocr.copy_all": [
+            .zhHans: "复制全部文本",
+            .en: "Copy All Text",
+            .ja: "すべてのテキストをコピー",
+            .ko: "모든 텍스트 복사"
+        ],
+        "ocr.translate": [
+            .zhHans: "对照翻译",
+            .en: "Translate",
+            .ja: "翻訳",
+            .ko: "번역"
+        ],
+        "ocr.recognize_fail": [
+            .zhHans: "文字识别失败",
+            .en: "Text Recognition Failed",
+            .ja: "文字認識に失敗しました",
+            .ko: "텍스트 인식 실패"
+        ],
+        
+        // MARK: - Secondary Palette
+        "palette.text.plain": [
+            .zhHans: "纯色",
+            .en: "Plain",
+            .ja: "単色",
+            .ko: "단색"
+        ],
+        "palette.text.outline": [
+            .zhHans: "描边",
+            .en: "Outline",
+            .ja: "輪郭",
+            .ko: "외곽선"
+        ],
+        "palette.mosaic.fine": [
+            .zhHans: "细 10px",
+            .en: "Fine 10px",
+            .ja: "細 10px",
+            .ko: "얇게 10px"
+        ],
+        "palette.mosaic.coarse": [
+            .zhHans: "粗 20px",
+            .en: "Coarse 20px",
+            .ja: "太 20px",
+            .ko: "굵게 20px"
+        ],
+        "palette.counter.filled": [
+            .zhHans: "实心",
+            .en: "Filled",
+            .ja: "塗り",
+            .ko: "채우기"
+        ],
+        "palette.counter.outline": [
+            .zhHans: "描边",
+            .en: "Outline",
+            .ja: "輪郭",
+            .ko: "외곽선"
+        ],
+        "palette.counter.reset": [
+            .zhHans: "重置序号",
+            .en: "Reset Counter",
+            .ja: "番号リセット",
+            .ko: "번호 초기화"
+        ],
+        
+        // MARK: - Translation Floating Toolbar & HUD
+        "translate.tab.original": [
+            .zhHans: "原文",
+            .en: "Original",
+            .ja: "原文",
+            .ko: "원문"
+        ],
+        "translate.tab.translated": [
+            .zhHans: "译文",
+            .en: "Translated",
+            .ja: "訳文",
+            .ko: "번역"
+        ],
+        "translate.switch_help": [
+            .zhHans: "在原文与译文之间原地切换 (敲击空格键也可切换)",
+            .en: "Toggle between original and translated (Spacebar works too)",
+            .ja: "原文と訳文を切り替え (スペースキーでも可能)",
+            .ko: "원문과 번역문 전환 (스페이스바로도 전환 가능)"
+        ],
+        "translate.auto_detect": [
+            .zhHans: "自动检测",
+            .en: "Auto Detect",
+            .ja: "自動検出",
+            .ko: "자동 감지"
+        ],
+        "translate.auto": [
+            .zhHans: "自动",
+            .en: "Auto",
+            .ja: "自動",
+            .ko: "자동"
+        ],
+        "translate.swap": [
+            .zhHans: "互换",
+            .en: "Swap",
+            .ja: "入替",
+            .ko: "맞바꾸기"
+        ],
+        "translate.swap_help": [
+            .zhHans: "互换源语言与目标语言",
+            .en: "Swap source and target languages",
+            .ja: "原言語と翻訳先言語を入れ替え",
+            .ko: "원본 언어와 대상 언어 맞바꾸기"
+        ],
+        "translate.copy": [
+            .zhHans: "复制",
+            .en: "Copy",
+            .ja: "コピー",
+            .ko: "복사"
+        ],
+        "translate.copy_help": [
+            .zhHans: "复制译文到剪贴板",
+            .en: "Copy translation to clipboard",
+            .ja: "翻訳結果をクリップボードにコピー",
+            .ko: "번역 결과 클립보드로 복사"
+        ],
+        "translate.close_help": [
+            .zhHans: "退出翻译 (Esc 或点击外部均可退出)",
+            .en: "Close translation (Esc or click outside)",
+            .ja: "翻訳を終了 (Esc または外側をクリック)",
+            .ko: "번역 닫기 (Esc 또는 바깥쪽 클릭)"
+        ],
+        "translate.copied": [
+            .zhHans: "已复制",
+            .en: "Copied",
+            .ja: "コピー完了",
+            .ko: "복사됨"
+        ],
+        "translate.engine.apple": [
+            .zhHans: "Apple 原生翻译",
+            .en: "Apple Translation",
+            .ja: "Apple ネイティブ翻訳",
+            .ko: "Apple 기본 번역"
+        ],
+        "translate.engine.deepl": [
+            .zhHans: "DeepL 官方翻译",
+            .en: "DeepL Translation",
+            .ja: "DeepL 公式翻訳",
+            .ko: "DeepL 공식 번역"
+        ],
+        "translate.err.offline_missing": [
+            .zhHans: "离线包未下载",
+            .en: "Offline pack missing",
+            .ja: "オフライン未取得",
+            .ko: "오프라인 팩 없음"
+        ],
+        "translate.err.go_download": [
+            .zhHans: "去下载 ↗",
+            .en: "Download ↗",
+            .ja: "取得 ↗",
+            .ko: "다운로드 ↗"
+        ],
+        "translate.err.offline_help": [
+            .zhHans: "点击前往 macOS「语言与地区」系统设置下载翻译语言包",
+            .en: "Click to open macOS Language & Region settings to download packs",
+            .ja: "macOS の「言語と地域」設定から言語パックをダウンロード",
+            .ko: "macOS 「언어 및 지역」 설정에서 언어 팩 다운로드"
+        ],
+        "translate.err.no_text": [
+            .zhHans: "未检测到文字",
+            .en: "No text detected",
+            .ja: "文字未検出",
+            .ko: "텍스트 미감지"
+        ],
+        "translate.err.same_lang": [
+            .zhHans: "源与目标相同",
+            .en: "Same languages",
+            .ja: "同一言語です",
+            .ko: "언어가 동일함"
+        ],
+        "translate.err.network": [
+            .zhHans: "网络连接不可用",
+            .en: "Network offline",
+            .ja: "オフライン",
+            .ko: "네트워크 불가"
+        ],
+        "translate.retry": [
+            .zhHans: "重试",
+            .en: "Retry",
+            .ja: "再試行",
+            .ko: "재시도"
+        ],
+        "translate.fallback_online": [
+            .zhHans: "已转在线·缺离线包",
+            .en: "Online fallback (No offline pack)",
+            .ja: "オンライン代行中 (パック未取得)",
+            .ko: "온라인 대체 중 (오프라인 팩 없음)"
+        ],
+        "translate.fallback_online_help": [
+            .zhHans: "因 Apple 离线语言包未安装，当前已自动降级为在线翻译。点击可前往系统设置下载离线包。",
+            .en: "Falling back to online translation because Apple offline pack is not installed. Click to download in System Settings.",
+            .ja: "Apple オフラインパック未インストールの為、オンライン翻訳で対応中。クリックで設定を開きます。",
+            .ko: "Apple 오프라인 팩이 없어 온라인 번역으로 대체되었습니다. 클릭하여 시스템 설정에서 다운로드하세요."
+        ],
+        "translate.smart_online": [
+            .zhHans: "智能在线补位",
+            .en: "Smart Online Fallback",
+            .ja: "スマート補正中",
+            .ko: "스마트 온라인 대체"
+        ],
+        "translate.smart_online_help": [
+            .zhHans: "源语种特征不明显，已启用多通道智能在线识别与翻译",
+            .en: "Low-confidence source language, smart multi-channel online translation enabled",
+            .ja: "言語判定が困難なため、高精度オンライン翻訳を使用中",
+            .ko: "원본 언어 식별이 어려워 스마트 온라인 번역이 활성화되었습니다"
+        ],
+        "translate.current_engine": [
+            .zhHans: "当前翻译引擎",
+            .en: "Current Engine",
+            .ja: "現在のエンジン",
+            .ko: "현재 번역 엔진"
+        ],
+        "translate.change_source": [
+            .zhHans: "点击修改原语言",
+            .en: "Click to change source language",
+            .ja: "クリックして原言語を変更",
+            .ko: "원본 언어 변경"
+        ],
+        "translate.change_target": [
+            .zhHans: "点击修改目标语言",
+            .en: "Click to change target language",
+            .ja: "クリックして目標言語を変更",
+            .ko: "대상 언어 변경"
+        ],
+        
+        // MARK: - Language Names
+        "lang.zh_hans": [
+            .zhHans: "中文 (简体)",
+            .en: "Chinese (Simplified)",
+            .ja: "中国語 (簡体字)",
+            .ko: "중국어 (간체)"
+        ],
+        "lang.zh_hant": [
+            .zhHans: "中文 (繁体)",
+            .en: "Chinese (Traditional)",
+            .ja: "中国語 (繁体字)",
+            .ko: "중국어 (번체)"
+        ],
+        "lang.en": [
+            .zhHans: "英语 (English)",
+            .en: "English (English)",
+            .ja: "英語 (English)",
+            .ko: "영어 (English)"
+        ],
+        "lang.ja": [
+            .zhHans: "日语 (日本語)",
+            .en: "Japanese (日本語)",
+            .ja: "日本語 (日本語)",
+            .ko: "일본어 (日本語)"
+        ],
+        "lang.ko": [
+            .zhHans: "韩语 (한국어)",
+            .en: "Korean (한국어)",
+            .ja: "韓国語 (한국어)",
+            .ko: "한국어 (한국어)"
+        ],
+        "lang.fr": [
+            .zhHans: "法语 (Français)",
+            .en: "French (Français)",
+            .ja: "フランス語 (Français)",
+            .ko: "프랑스어 (Français)"
+        ],
+        "lang.de": [
+            .zhHans: "德语 (Deutsch)",
+            .en: "German (Deutsch)",
+            .ja: "ドイツ語 (Deutsch)",
+            .ko: "독일어 (Deutsch)"
+        ],
+        "lang.es": [
+            .zhHans: "西班牙语 (Español)",
+            .en: "Spanish (Español)",
+            .ja: "スペイン語 (Español)",
+            .ko: "스페인어 (Español)"
+        ],
+        "lang.ru": [
+            .zhHans: "俄语 (Русский)",
+            .en: "Russian (Русский)",
+            .ja: "ロシア語 (Русский)",
+            .ko: "러시아어 (Русский)"
+        ],
+        
+        // MARK: - Short Language Badges (1-2 chars)
+        "lang.short.zh": [
+            .zhHans: "中",
+            .en: "ZH",
+            .ja: "中",
+            .ko: "중"
+        ],
+        "lang.short.en": [
+            .zhHans: "英",
+            .en: "EN",
+            .ja: "英",
+            .ko: "영"
+        ],
+        "lang.short.ja": [
+            .zhHans: "日",
+            .en: "JA",
+            .ja: "日",
+            .ko: "일"
+        ],
+        "lang.short.ko": [
+            .zhHans: "韩",
+            .en: "KO",
+            .ja: "韓",
+            .ko: "한"
+        ],
+        "lang.short.fr": [
+            .zhHans: "法",
+            .en: "FR",
+            .ja: "仏",
+            .ko: "불"
+        ],
+        "lang.short.de": [
+            .zhHans: "德",
+            .en: "DE",
+            .ja: "独",
+            .ko: "독"
+        ],
+        "lang.short.es": [
+            .zhHans: "西",
+            .en: "ES",
+            .ja: "西",
+            .ko: "서"
+        ],
+        "lang.short.ru": [
+            .zhHans: "俄",
+            .en: "RU",
+            .ja: "露",
+            .ko: "러"
         ]
     ]
 }
