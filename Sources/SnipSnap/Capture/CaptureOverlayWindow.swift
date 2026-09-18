@@ -26,6 +26,7 @@ public class CaptureOverlayWindowController: NSWindowController {
     
     private var overlayView: CaptureOverlayView?
     private var localKeyMonitor: Any?
+    private var globalKeyMonitor: Any?
     
     public static func startCapture(mode: CaptureMode = .normal) {
         if let existing = shared {
@@ -108,6 +109,12 @@ public class CaptureOverlayWindowController: NSWindowController {
             if overlay.isSavePanelActive {
                 return event
             }
+            if overlay.isRecordingGIF {
+                if event.keyCode == 36 || event.keyCode == 49 || event.keyCode == 53 { // Enter, Space, Escape
+                    overlay.stopGIFRecording()
+                    return nil
+                }
+            }
             if event.keyCode == 53 { // Escape
                 overlay.handleEscapeKey()
                 return nil
@@ -123,12 +130,25 @@ public class CaptureOverlayWindowController: NSWindowController {
             }
             return event
         }
+        
+        globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self = self, let overlay = self.overlayView, overlay.isRecordingGIF else { return }
+            if event.keyCode == 36 || event.keyCode == 49 || event.keyCode == 53 { // Enter, Space, Escape
+                DispatchQueue.main.async {
+                    overlay.stopGIFRecording()
+                }
+            }
+        }
     }
     
     public func closeCapture() {
         if let monitor = localKeyMonitor {
             NSEvent.removeMonitor(monitor)
             localKeyMonitor = nil
+        }
+        if let monitor = globalKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalKeyMonitor = nil
         }
         window?.orderOut(nil)
         window?.close()

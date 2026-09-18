@@ -46,6 +46,7 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     private var recordingSeconds: Int = 0
     private var pulsePhase: Double = 0.0
     private var recordingTimer: Timer?
+    private var recordingBadgeRect: CGRect = .zero
     
     public var captureMode: CaptureMode = .normal {
         didSet {
@@ -312,6 +313,18 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     }
     
     public override func hitTest(_ point: NSPoint) -> NSView? {
+        if isRecordingGIF {
+            // 1. If clicked on the recording badge, intercept to stop recording
+            if !recordingBadgeRect.isEmpty && recordingBadgeRect.insetBy(dx: -4, dy: -4).contains(point) {
+                return self
+            }
+            // 2. If click is inside selectionRect, pass through to underlying applications!
+            if !selectionRect.isEmpty && selectionRect.contains(point) {
+                return nil
+            }
+            // 3. If clicked outside selectionRect on dimmed backdrop, intercept to stop recording
+            return self
+        }
         if let hub = ocrFloatingHubView, !hub.isHidden, hub.frame.contains(point) {
             return hub.hitTest(point)
         }
@@ -441,7 +454,11 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     
     public override func mouseDown(with event: NSEvent) {
         if isRecordingGIF {
-            stopGIFRecording()
+            let rawPoint = convert(event.locationInWindow, from: nil)
+            // Stop if clicked the badge or clicked outside the selection rect
+            if (!recordingBadgeRect.isEmpty && recordingBadgeRect.insetBy(dx: -4, dy: -4).contains(rawPoint)) || !selectionRect.contains(rawPoint) {
+                stopGIFRecording()
+            }
             return
         }
         if isSavePanelActive { return }
@@ -780,15 +797,16 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
                 context.stroke(selectionRect.insetBy(dx: -1.0, dy: -1.0))
                 context.restoreGState()
                 
-                // 2. Dynamic Recording Badge: Red capsule with recording dot and live timer
-                let timeStr = String(format: "● %02ds / 30s", recordingSeconds)
+                // 2. Dynamic Recording Badge: Red capsule with recording dot, live timer, and stop button
+                let maxDuration = AppConfig.load().gifMaxDuration
+                let timeStr = String(format: "● %02ds / %02ds  ✕ %@", recordingSeconds, maxDuration, L10n("toolbar.action.cancel"))
                 let badgeFont = NSFont.monospacedDigitSystemFont(ofSize: 11.5, weight: .bold)
                 let badgeAttrs: [NSAttributedString.Key: Any] = [
                     .font: badgeFont,
                     .foregroundColor: NSColor.white
                 ]
                 let badgeSize = (timeStr as NSString).size(withAttributes: badgeAttrs)
-                let badgeWidth = badgeSize.width + 16
+                let badgeWidth = badgeSize.width + 18
                 let badgeHeight = badgeSize.height + 8
                 
                 let badgeX = min(bounds.width - badgeWidth - 8, max(8, selectionRect.maxX - badgeWidth))
@@ -796,9 +814,10 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
                     ? selectionRect.maxY + 6
                     : max(8, selectionRect.maxY - badgeHeight - 6)
                 let badgeRect = CGRect(x: badgeX, y: badgeY, width: badgeWidth, height: badgeHeight)
+                self.recordingBadgeRect = badgeRect
                 
                 context.saveGState()
-                context.setFillColor(NSColor(calibratedRed: 0.9, green: 0.15, blue: 0.15, alpha: 0.92).cgColor)
+                context.setFillColor(NSColor(calibratedRed: 0.9, green: 0.15, blue: 0.15, alpha: 0.95).cgColor)
                 let pillPath = NSBezierPath(roundedRect: badgeRect, xRadius: badgeHeight / 2, yRadius: badgeHeight / 2)
                 pillPath.fill()
                 
@@ -806,7 +825,7 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
                 context.setLineWidth(1.0)
                 pillPath.stroke()
                 
-                (timeStr as NSString).draw(at: CGPoint(x: badgeRect.minX + 8, y: badgeRect.minY + 4), withAttributes: badgeAttrs)
+                (timeStr as NSString).draw(at: CGPoint(x: badgeRect.minX + 9, y: badgeRect.minY + 4), withAttributes: badgeAttrs)
                 context.restoreGState()
             } else {
                 // 1. Apple Intelligence Violet-Blue Radiant Optical Glow Border:
@@ -1169,13 +1188,14 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
             excludingWindowNumber: window?.windowNumber
         )
         
+        let maxDuration = AppConfig.load().gifMaxDuration
         recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self, self.isRecordingGIF else { return }
             self.pulsePhase += 0.1
             let sec = Int(self.pulsePhase)
             if sec != self.recordingSeconds {
                 self.recordingSeconds = sec
-                if self.recordingSeconds >= 30 {
+                if self.recordingSeconds >= maxDuration {
                     self.stopGIFRecording()
                     return
                 }
@@ -1189,6 +1209,7 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
         isRecordingGIF = false
         recordingTimer?.invalidate()
         recordingTimer = nil
+        recordingBadgeRect = .zero
         
         // Immediately dismiss overlay window so user returns to desktop
         onClose?()
