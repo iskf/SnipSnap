@@ -42,7 +42,7 @@ public class VisionOCRService {
                     return nil
                 }
                 
-                guard let observations = request.results as? [VNRecognizedTextObservation] else {
+                guard let observations = request.results else {
                     return nil
                 }
                 

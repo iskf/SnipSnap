@@ -14,6 +14,7 @@ public protocol AnnotationToolbarDelegate: AnyObject {
     func toolbarDidClickRedo()
     func toolbarDidClickOCR()
     func toolbarDidClickTranslate()
+    func toolbarDidClickRecordGIF()
     func toolbarDidClickPin()
     func toolbarDidClickSave()
     func toolbarDidClickCopy()
@@ -35,6 +36,7 @@ public extension AnnotationToolbarDelegate {
     func toolbarDidClickRedo() {}
     func toolbarDidClickOCR() {}
     func toolbarDidClickTranslate() {}
+    func toolbarDidClickRecordGIF() {}
     func toolbarDidClickPin() {}
     func toolbarDidClickSave() {}
     func toolbarDidClickCopy() {}
@@ -64,7 +66,7 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
     // Layout
     private let mainRowStack = NSStackView()
     
-    public static let standardWidth: CGFloat = 462.0
+    public static let standardWidth: CGFloat = 496.0
     public static let standardHeight: CGFloat = 38.0
     
     public init(delegate: AnnotationToolbarDelegate?) {
@@ -138,8 +140,9 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         // 分割线 ｜
         mainRowStack.addArrangedSubview(makeDivider(height: 18))
         
-        // Group 3: 操作区 (取消, 保存, 贴屏, 完成并复制)
+        // Group 3: 操作区 (取消, 录制动图, 保存, 贴屏, 完成并复制)
         addActionButton(icon: "xmark", tipKey: "toolbar.action.cancel", keycap: "Esc", action: #selector(btnCloseClicked))
+        addActionButton(icon: "record.circle", tipKey: "toolbar.action.record_gif", action: #selector(btnRecordGIFClicked))
         addActionButton(icon: "square.and.arrow.down", tipKey: "toolbar.action.save", keycap: "⌘S", action: #selector(btnSaveClicked))
         addActionButton(icon: "pin", tipKey: "toolbar.action.pin", keycap: "F3", action: #selector(btnPinClicked))
         addActionButton(icon: "checkmark", tipKey: "toolbar.action.copy", keycap: "Enter", action: #selector(btnCopyClicked))
@@ -282,6 +285,7 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
     @objc private func btnRedoClicked() { delegate?.toolbarDidClickRedo() }
     @objc private func btnOCRClicked() { delegate?.toolbarDidClickOCR() }
     @objc private func btnTranslateClicked() { delegate?.toolbarDidClickTranslate() }
+    @objc private func btnRecordGIFClicked() { delegate?.toolbarDidClickRecordGIF() }
     @objc private func btnPinClicked() { delegate?.toolbarDidClickPin() }
     @objc private func btnSaveClicked() { delegate?.toolbarDidClickSave() }
     @objc private func btnCloseClicked() { delegate?.toolbarDidClickClose() }

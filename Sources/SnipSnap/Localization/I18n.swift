@@ -949,6 +949,12 @@ public class I18n: ObservableObject {
             .ja: "完了してコピー",
             .ko: "완료 및 복사"
         ],
+        "toolbar.action.record_gif": [
+            .zhHans: "录制短动图",
+            .en: "Record GIF",
+            .ja: "GIF録画",
+            .ko: "GIF 녹화"
+        ],
         "loupe.tip": [
             .zhHans: "C:复制 | Shift:格式",
             .en: "C: Copy | Shift: Format",
