@@ -19,6 +19,7 @@ public class CaptureWindow: NSWindow {
 public enum CaptureMode {
     case normal       // 普通截屏模式（带画笔工具栏）
     case translate    // 选区翻译模式（松手直出双栏翻译对照卡片）
+    case scroll       // 选区长截图模式（选区后直出长截图会话）
 }
 
 public class CaptureOverlayWindowController: NSWindowController {

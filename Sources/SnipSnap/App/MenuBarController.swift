@@ -8,6 +8,7 @@ public class MenuBarController: NSObject, NSMenuDelegate {
     private var snapItem: NSMenuItem?
     private var pinItem: NSMenuItem?
     private var ocrItem: NSMenuItem?
+    private var scrollCaptureItem: NSMenuItem?
     private var togglePinsItem: NSMenuItem?
     private var unlockPinsItem: NSMenuItem?
     private var closePinsItem: NSMenuItem?
@@ -44,7 +45,7 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
         
-        // 1. Core Actions
+        // 1. Core Actions (F1: 屏幕截图, F2: 剪切板贴图, F3: 长截图, F4: 选区翻译)
         let snap = makeMenuItem(title: L10n("menu.screenshot"), icon: "camera.viewfinder", action: #selector(actionScreenshot))
         self.snapItem = snap
         menu.addItem(snap)
@@ -52,6 +53,10 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         let pin = makeMenuItem(title: L10n("menu.pin_clipboard"), icon: "pin", action: #selector(actionPinClipboard))
         self.pinItem = pin
         menu.addItem(pin)
+        
+        let scrollCapture = makeMenuItem(title: L10n("menu.scroll_capture"), icon: "arrow.down.doc", action: #selector(actionScrollCapture))
+        self.scrollCaptureItem = scrollCapture
+        menu.addItem(scrollCapture)
         
         let translate = makeMenuItem(title: L10n("menu.selection_translate"), icon: "translate", action: #selector(actionSelectionTranslate))
         self.ocrItem = translate
@@ -126,6 +131,9 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         }
         if let item = pinItem {
             applyShortcut(to: item, shortcutString: config.pinShortcut)
+        }
+        if let item = scrollCaptureItem {
+            applyShortcut(to: item, shortcutString: config.scrollCaptureShortcut)
         }
         if let item = ocrItem {
             applyShortcut(to: item, shortcutString: config.translateShortcut)
@@ -225,6 +233,12 @@ public class MenuBarController: NSObject, NSMenuDelegate {
     @objc private func actionSelectionTranslate() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
             CaptureOverlayWindowController.startCapture(mode: .translate)
+        }
+    }
+    
+    @objc private func actionScrollCapture() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            CaptureOverlayWindowController.startCapture(mode: .scroll)
         }
     }
     

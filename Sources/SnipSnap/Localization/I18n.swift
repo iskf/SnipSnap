@@ -111,6 +111,12 @@ public class I18n: ObservableObject {
             .ja: "選択範囲の翻訳",
             .ko: "선택 영역 번역"
         ],
+        "menu.scroll_capture": [
+            .zhHans: "长截图",
+            .en: "Scrolling Capture",
+            .ja: "スクロールキャプチャ",
+            .ko: "스크롤 캡처"
+        ],
         "menu.hide_all_pins": [
             .zhHans: "隐藏所有贴图",
             .en: "Hide All Pins",
@@ -477,23 +483,29 @@ public class I18n: ObservableObject {
             .ja: "① 画面キャプチャ",
             .ko: "① 화면 캡처"
         ],
-        "pref.hotkey.action_translate": [
-            .zhHans: "② 选区翻译",
-            .en: "② Selection Translation",
-            .ja: "② 選択範囲の翻訳",
-            .ko: "② 선택 영역 번역"
-        ],
         "pref.hotkey.action_pin": [
-            .zhHans: "③ 剪贴板贴图",
-            .en: "③ Pin Clipboard",
-            .ja: "③ クリップボードをピン留め",
-            .ko: "③ 클립보드 고정"
+            .zhHans: "② 剪贴板贴图",
+            .en: "② Pin Clipboard",
+            .ja: "② クリップボードをピン留め",
+            .ko: "② 클립보드 고정"
+        ],
+        "pref.hotkey.action_scroll_capture": [
+            .zhHans: "③ 长截图",
+            .en: "③ Scrolling Capture",
+            .ja: "③ スクロールキャプチャ",
+            .ko: "③ 스크롤 캡처"
+        ],
+        "pref.hotkey.action_translate": [
+            .zhHans: "④ 选区翻译",
+            .en: "④ Selection Translation",
+            .ja: "④ 選択範囲の翻訳",
+            .ko: "④ 선택 영역 번역"
         ],
         "pref.hotkey.action_toggle_pins": [
-            .zhHans: "④ 隐藏/显示所有贴图",
-            .en: "④ Toggle All Pins",
-            .ja: "④ すべてのピンの表示切替",
-            .ko: "④ 모든 고정 표시 전환"
+            .zhHans: "隐藏/显示所有贴图",
+            .en: "Toggle All Pins",
+            .ja: "すべてのピンの表示切替",
+            .ko: "모든 고정 표시 전환"
         ],
         "pref.hotkey.tips_card": [
             .zhHans: "快捷键录制提示",
@@ -734,6 +746,54 @@ public class I18n: ObservableObject {
             .en: "DeepL Official API (High Accuracy)",
             .ja: "DeepL 公式 API (高精度)",
             .ko: "DeepL 공식 API (고정밀)"
+        ],
+        "pref.ocr.provider_ai": [
+            .zhHans: "AI 大模型翻译 (推荐)",
+            .en: "AI Model Translation (Recommended)",
+            .ja: "AI モデル翻訳 (推奨)",
+            .ko: "AI 대형 모델 번역 (추천)"
+        ],
+        "pref.ocr.ai_preset": [
+            .zhHans: "服务商预设",
+            .en: "Provider Preset",
+            .ja: "プロバイダプリセット",
+            .ko: "제공자 프리셋"
+        ],
+        "pref.ocr.ai_key": [
+            .zhHans: "API 密钥 (API Key)",
+            .en: "API Key",
+            .ja: "API キー",
+            .ko: "API 키"
+        ],
+        "pref.ocr.ai_key_placeholder": [
+            .zhHans: "在此输入 API Key (如 sk-...)",
+            .en: "Enter API Key here (e.g. sk-...)",
+            .ja: "ここに API キーを入力 (sk-...)",
+            .ko: "여기에 API 키 입력 (sk-...)"
+        ],
+        "pref.ocr.ai_base_url": [
+            .zhHans: "API 基础地址 (Base URL)",
+            .en: "API Base URL",
+            .ja: "API ベース URL",
+            .ko: "API 기본 URL"
+        ],
+        "pref.ocr.ai_model": [
+            .zhHans: "模型名称 (Model)",
+            .en: "Model Name",
+            .ja: "モデル名",
+            .ko: "모델 이름"
+        ],
+        "pref.ocr.ai_test_btn": [
+            .zhHans: "测试连接",
+            .en: "Test Connection",
+            .ja: "接続テスト",
+            .ko: "연결 테스트"
+        ],
+        "pref.ocr.ai_testing": [
+            .zhHans: "正在测试...",
+            .en: "Testing...",
+            .ja: "テスト中...",
+            .ko: "테스트 중..."
         ],
         "pref.ocr.apple_offline_title": [
             .zhHans: "Apple 离线翻译语言包",
@@ -1045,6 +1105,90 @@ public class I18n: ObservableObject {
             .ja: "GIF録画",
             .ko: "GIF 녹화"
         ],
+        "toolbar.action.scroll_capture": [
+            .zhHans: "长截图",
+            .en: "Scrolling Capture",
+            .ja: "スクロールキャプチャ",
+            .ko: "스크롤 캡처"
+        ],
+        "scroll.hud.title": [
+            .zhHans: "长截图",
+            .en: "Scrolling Capture",
+            .ja: "スクロールキャプチャ",
+            .ko: "스크롤 캡처"
+        ],
+        "scroll.hud.pause": [
+            .zhHans: "暂停",
+            .en: "Pause",
+            .ja: "一時停止",
+            .ko: "일시 중지"
+        ],
+        "scroll.hud.resume": [
+            .zhHans: "继续",
+            .en: "Resume",
+            .ja: "再開",
+            .ko: "재개"
+        ],
+        "scroll.hud.finish": [
+            .zhHans: "完成",
+            .en: "Finish",
+            .ja: "完了",
+            .ko: "완료"
+        ],
+        "scroll.hud.cancel": [
+            .zhHans: "取消",
+            .en: "Cancel",
+            .ja: "キャンセル",
+            .ko: "취소"
+        ],
+        "scroll.hud.speed_slow": [
+            .zhHans: "慢",
+            .en: "Slow",
+            .ja: "遅い",
+            .ko: "느림"
+        ],
+        "scroll.hud.speed_normal": [
+            .zhHans: "中",
+            .en: "Normal",
+            .ja: "標準",
+            .ko: "보통"
+        ],
+        "scroll.hud.speed_fast": [
+            .zhHans: "快",
+            .en: "Fast",
+            .ja: "速い",
+            .ko: "빠름"
+        ],
+        "scroll.hud.bottom_countdown": [
+            .zhHans: "已到达底部，请按 Enter 完成",
+            .en: "Reached bottom, press Enter to finish",
+            .ja: "末尾に到達、Enterで完了",
+            .ko: "하단 도달, Enter를 눌러 완료"
+        ],
+        "scroll.hud.bottom_reached": [
+            .zhHans: "已到达底部，请按 Enter 完成",
+            .en: "Reached bottom, press Enter to finish",
+            .ja: "末尾に到達、Enterで完了",
+            .ko: "하단 도달, Enter를 눌러 완료"
+        ],
+        "scroll.hud.copied": [
+            .zhHans: "✓ 已复制到剪贴板",
+            .en: "✓ Copied to clipboard",
+            .ja: "✓ クリップボードにコピーしました",
+            .ko: "✓ 클립보드에 복사됨"
+        ],
+        "scroll.hud.copied_segments": [
+            .zhHans: "✓ 已分段复制多张长图",
+            .en: "✓ Copied segmented images",
+            .ja: "✓ 分割画像をコピーしました",
+            .ko: "✓ 분할 이미지가 복사됨"
+        ],
+        "scroll.hud.segment_warn": [
+            .zhHans: "接近单图上限，将分段导出",
+            .en: "Approaching limit, will segment",
+            .ja: "上限に近いため分割保存します",
+            .ko: "한계에 도달하여 분할 저장됩니다"
+        ],
         "loupe.tip": [
             .zhHans: "C:复制 | Shift:格式",
             .en: "C: Copy | Shift: Format",
@@ -1150,6 +1294,12 @@ public class I18n: ObservableObject {
             .en: "Auto",
             .ja: "自動",
             .ko: "자동"
+        ],
+        "translate.stop_generating": [
+            .zhHans: "停止生成",
+            .en: "Stop",
+            .ja: "停止",
+            .ko: "중지"
         ],
         "translate.swap": [
             .zhHans: "互换",

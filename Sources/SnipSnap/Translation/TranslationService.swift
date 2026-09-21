@@ -3,7 +3,7 @@ import Foundation
 import Translation
 #endif
 
-public struct TranslationResponse {
+public struct TranslationResponse: Sendable {
     public let translatedText: String
     public let sourceLanguage: String
     public let targetLanguage: String
@@ -17,6 +17,7 @@ public struct TranslationResponse {
 
 public class TranslationService: @unchecked Sendable {
     public static let shared = TranslationService()
+    public let aiProvider = AITranslationProvider()
     
     private var lastGoogleFailure: Date?
     private let googleCooldownSeconds: TimeInterval = 300.0 // 5 minutes circuit breaker
@@ -141,7 +142,7 @@ public class TranslationService: @unchecked Sendable {
         text: String,
         from sourceLang: String = "auto",
         to targetLang: String? = nil,
-        completion: @escaping (Result<TranslationResponse, Error>) -> Void
+        completion: @escaping @Sendable (Result<TranslationResponse, Error>) -> Void
     ) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -161,7 +162,15 @@ public class TranslationService: @unchecked Sendable {
             resolvedTarget = isSourceChinese ? "en" : "zh-Hans"
         }
         
-        if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
+        if config.translationProvider == "ai" {
+            _ = aiProvider.translate(
+                text: trimmed,
+                from: resolvedSource,
+                to: resolvedTarget,
+                options: TranslationOptions(isStreaming: false),
+                completion: completion
+            )
+        } else if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
             translateViaDeepL(text: trimmed, authKey: config.deeplAuthKey, isFree: config.deeplIsFreeAPI, from: resolvedSource, to: resolvedTarget) { [weak self] result in
                 switch result {
                 case .success(let resp):
@@ -173,6 +182,52 @@ public class TranslationService: @unchecked Sendable {
             }
         } else {
             translateViaApple(text: trimmed, isSourceChinese: isSourceChinese, from: resolvedSource, to: resolvedTarget, completion: completion)
+        }
+    }
+    
+    // MARK: - Streaming Translation Entry
+    
+    @discardableResult
+    public func translateStream(
+        text: String,
+        from sourceLang: String = "auto",
+        to targetLang: String? = nil,
+        onChunk: @escaping @Sendable (String) -> Void,
+        completion: @escaping @Sendable (Result<TranslationResponse, Error>) -> Void
+    ) -> CancellableTask? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            completion(.success(TranslationResponse(translatedText: "", sourceLanguage: "auto", targetLanguage: "zh")))
+            return nil
+        }
+        
+        let config = AppConfig.load()
+        let isSourceChinese = detectIsChinese(trimmed)
+        let resolvedSource = sourceLang
+        let resolvedTarget: String
+        if let explicitTarget = targetLang, !explicitTarget.isEmpty, explicitTarget != "auto" {
+            resolvedTarget = explicitTarget
+        } else {
+            resolvedTarget = isSourceChinese ? "en" : "zh-Hans"
+        }
+        
+        if config.translationProvider == "ai" {
+            let options = TranslationOptions(isStreaming: true, onStreamChunk: onChunk)
+            return aiProvider.translate(
+                text: trimmed,
+                from: resolvedSource,
+                to: resolvedTarget,
+                options: options,
+                completion: completion
+            )
+        } else {
+            translate(text: trimmed, from: sourceLang, to: targetLang) { result in
+                if case .success(let resp) = result {
+                    onChunk(resp.translatedText)
+                }
+                completion(result)
+            }
+            return nil
         }
     }
     
@@ -449,6 +504,17 @@ public class TranslationService: @unchecked Sendable {
                 completion(.failure(err))
             }
         }
+    }
+    
+    // MARK: - AI Connection Test
+    
+    public func testAIConnection(
+        baseURL: String,
+        apiKey: String,
+        model: String,
+        completion: @escaping @Sendable (Result<String, Error>) -> Void
+    ) {
+        aiProvider.testConnection(baseURL: baseURL, apiKey: apiKey, model: model, completion: completion)
     }
     
     // MARK: - Language Helpers

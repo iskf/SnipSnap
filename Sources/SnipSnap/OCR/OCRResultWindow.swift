@@ -209,12 +209,14 @@ struct OCRResultContentView: View {
         guard !originalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         isTranslating = true
         TranslationService.shared.translate(text: originalText) { result in
-            isTranslating = false
-            switch result {
-            case .success(let resp):
-                self.translatedText = resp.translatedText
-            case .failure(let err):
-                self.translatedText = "翻译失败: \(err.localizedDescription)"
+            DispatchQueue.main.async {
+                isTranslating = false
+                switch result {
+                case .success(let resp):
+                    self.translatedText = resp.translatedText
+                case .failure(let err):
+                    self.translatedText = "翻译失败: \(err.localizedDescription)"
+                }
             }
         }
     }

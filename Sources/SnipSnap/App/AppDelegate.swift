@@ -150,6 +150,12 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
+        hotkeys.onScrollCapture = {
+            DispatchQueue.main.async {
+                CaptureOverlayWindowController.startCapture(mode: .scroll)
+            }
+        }
+        
         hotkeys.onToggleAllPins = {
             DispatchQueue.main.async {
                 PinWindowManager.shared.toggleAllPinsVisibility()

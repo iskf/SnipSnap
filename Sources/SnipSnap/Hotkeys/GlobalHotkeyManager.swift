@@ -7,6 +7,7 @@ public class GlobalHotkeyManager {
     
     public var onScreenshot: (() -> Void)?
     public var onPinClipboard: (() -> Void)?
+    public var onScrollCapture: (() -> Void)?
     public var onSelectionTranslate: (() -> Void)?
     public var onQuickOCR: (() -> Void)?
     public var onToggleAllPins: (() -> Void)?
@@ -22,7 +23,7 @@ public class GlobalHotkeyManager {
     
     // Registered shortcuts description for CGEventTap matching
     public struct RegisteredShortcut {
-        public let action: String // "screenshot", "translate", "pin", "togglePins"
+        public let action: String // "screenshot", "pin", "scrollCapture", "translate", "togglePins"
         public let keyCode: UInt32
         public let modifiers: UInt32
         public let handler: () -> Void
@@ -78,7 +79,17 @@ public class GlobalHotkeyManager {
             self?.onScreenshot?()
         }
         
-        // 2. Selection Translate (F2)
+        // 2. Pin from Clipboard (F2)
+        registerAction("pin", shortcutString: config.pinShortcut) { [weak self] in
+            self?.onPinClipboard?()
+        }
+        
+        // 3. Scrolling Capture (F3)
+        registerAction("scrollCapture", shortcutString: config.scrollCaptureShortcut) { [weak self] in
+            self?.onScrollCapture?()
+        }
+        
+        // 4. Selection Translate (F4)
         registerAction("translate", shortcutString: config.translateShortcut) { [weak self] in
             if let translate = self?.onSelectionTranslate {
                 translate()
@@ -87,12 +98,7 @@ public class GlobalHotkeyManager {
             }
         }
         
-        // 3. Pin from Clipboard (F3)
-        registerAction("pin", shortcutString: config.pinShortcut) { [weak self] in
-            self?.onPinClipboard?()
-        }
-        
-        // 4. Toggle All Pins (F4)
+        // 5. Toggle All Pins (F5)
         registerAction("togglePins", shortcutString: config.togglePinsShortcut) { [weak self] in
             self?.onToggleAllPins?()
         }
@@ -192,9 +198,11 @@ public class GlobalHotkeyManager {
                 if keyCode == 2 { // Physical F1 (Brightness Down)
                     matchedAction = "screenshot"
                 } else if keyCode == 3 { // Physical F2 (Brightness Up)
-                    matchedAction = "translate"
-                } else if keyCode == 30 || keyCode == 14 { // Physical F3 (Launchpad / Mission Control)
                     matchedAction = "pin"
+                } else if keyCode == 30 || keyCode == 14 { // Physical F3 (Launchpad / Mission Control)
+                    matchedAction = "scrollCapture"
+                } else if keyCode == 31 || keyCode == 16 { // Physical F4 (Spotlight / App)
+                    matchedAction = "translate"
                 }
                 
                 if let action = matchedAction {
@@ -202,8 +210,9 @@ public class GlobalHotkeyManager {
                     let isConfigured: Bool
                     switch action {
                     case "screenshot": isConfigured = (config.screenshotShortcut.uppercased() == "F1")
-                    case "translate": isConfigured = (config.translateShortcut.uppercased() == "F2")
-                    case "pin": isConfigured = (config.pinShortcut.uppercased() == "F3")
+                    case "pin": isConfigured = (config.pinShortcut.uppercased() == "F2")
+                    case "scrollCapture": isConfigured = (config.scrollCaptureShortcut.uppercased() == "F3")
+                    case "translate": isConfigured = (config.translateShortcut.uppercased() == "F4")
                     default: isConfigured = false
                     }
                     
@@ -319,14 +328,16 @@ public class GlobalHotkeyManager {
             switch action {
             case "screenshot":
                 self?.onScreenshot?()
+            case "pin":
+                self?.onPinClipboard?()
+            case "scrollCapture":
+                self?.onScrollCapture?()
             case "translate":
                 if let translate = self?.onSelectionTranslate {
                     translate()
                 } else {
                     self?.onQuickOCR?()
                 }
-            case "pin":
-                self?.onPinClipboard?()
             case "togglePins":
                 self?.onToggleAllPins?()
             default:

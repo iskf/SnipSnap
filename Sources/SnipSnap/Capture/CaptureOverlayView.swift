@@ -667,8 +667,24 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
             }
             
             // 4. Immediately close capture overlay and UNFREEZE screen!
-            // Restores normal arrow cursor and allows full interaction with all underlying apps.
             self.onClose?()
+            return
+        }
+        
+        if captureMode == .scroll {
+            // Dedicated scrolling capture mode:
+            let screenRect = NSRect(
+                x: fullBounds.origin.x + selectionRect.origin.x,
+                y: fullBounds.origin.y + selectionRect.origin.y,
+                width: selectionRect.width,
+                height: selectionRect.height
+            )
+            guard let screen = window?.screen ?? NSScreen.main else { return }
+            NSCursor.arrow.set()
+            self.onClose?()
+            DispatchQueue.main.async {
+                ScrollingCaptureSession.shared.startSession(screen: screen, screenRect: screenRect)
+            }
             return
         }
         
@@ -833,12 +849,14 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
     private func drawInfiniteCrosshair(at pt: CGPoint, in ctx: CGContext) {
         ctx.saveGState()
         
-        let x = round(pt.x) + 0.5
-        let y = round(pt.y) + 0.5
+        let scale = window?.backingScaleFactor ?? 2.0
+        let halfPixel = 0.5 / scale
+        let x = (floor(pt.x * scale) / scale) + halfPixel
+        let y = (floor(pt.y * scale) / scale) + halfPixel
         
-        // Crisp 1px bright white line
-        ctx.setStrokeColor(NSColor.white.withAlphaComponent(0.95).cgColor)
-        ctx.setLineWidth(1.0)
+        // Delicate Hairline (0.5pt / 1 physical pixel on Retina) with soft 75% opacity
+        ctx.setStrokeColor(NSColor.white.withAlphaComponent(0.75).cgColor)
+        ctx.setLineWidth(1.0 / scale)
         ctx.move(to: CGPoint(x: bounds.minX, y: y))
         ctx.addLine(to: CGPoint(x: bounds.maxX, y: y))
         ctx.move(to: CGPoint(x: x, y: bounds.minY))
@@ -1110,6 +1128,36 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
         }
     }
     
+    // MARK: - Scrolling Capture Controls
+    
+    public func toolbarDidClickScrollCapture() {
+        if selectionRect.isEmpty || selectionRect.width < 10 || selectionRect.height < 10 {
+            if let win = detectedWindows.first(where: { $0.frame.contains(currentMousePoint) }) {
+                selectionRect = win.frame.intersection(bounds)
+            } else {
+                selectionRect = bounds
+            }
+        }
+        guard let screen = window?.screen ?? NSScreen.main else { return }
+        
+        let screenRect = NSRect(
+            x: fullBounds.origin.x + selectionRect.origin.x,
+            y: fullBounds.origin.y + selectionRect.origin.y,
+            width: selectionRect.width,
+            height: selectionRect.height
+        )
+        
+        // Dismiss overlay
+        NSCursor.arrow.set()
+        ToolbarTooltipHUD.shared.hide()
+        onClose?()
+        
+        // Launch scrolling capture session
+        DispatchQueue.main.async {
+            ScrollingCaptureSession.shared.startSession(screen: screen, screenRect: screenRect)
+        }
+    }
+    
     public func toolbarDidClickPin() {
         if selectionRect.isEmpty || selectionRect.width < 10 || selectionRect.height < 10 {
             if let win = detectedWindows.first(where: { $0.frame.contains(currentMousePoint) }) {
@@ -1218,8 +1266,50 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
         }
         (fileURL as NSURL).write(to: pb)
         
-        NSSound(named: "Tink")?.play()
+        let config = AppConfig.load()
+        autoSaveImageIfNeeded(finalImage, config: config)
+        
+        if config.playSoundEffect {
+            NSSound(named: "Tink")?.play()
+        }
         onClose?()
+    }
+    
+    private func autoSaveImageIfNeeded(_ image: NSImage, config: AppConfig) {
+        guard config.autoSaveAfterCapture else { return }
+        
+        let saveDir: URL
+        if !config.defaultSavePath.isEmpty && FileManager.default.fileExists(atPath: config.defaultSavePath) {
+            saveDir = URL(fileURLWithPath: config.defaultSavePath)
+        } else if let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first {
+            saveDir = desktop
+        } else {
+            return
+        }
+        
+        let isJpeg = config.imageSaveFormat.uppercased() == "JPEG"
+        let ext = isJpeg ? "jpg" : "png"
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd_HH.mm.ss"
+        let baseName = "SnipSnap_\(df.string(from: Date()))"
+        var fileURL = saveDir.appendingPathComponent("\(baseName).\(ext)")
+        
+        var counter = 1
+        while FileManager.default.fileExists(atPath: fileURL.path) {
+            fileURL = saveDir.appendingPathComponent("\(baseName)_\(counter).\(ext)")
+            counter += 1
+        }
+        
+        guard let tiff = image.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff) else { return }
+        
+        let data = isJpeg
+            ? rep.representation(using: .jpeg, properties: [.compressionFactor: 0.92])
+            : rep.representation(using: .png, properties: [:])
+            
+        if let data = data {
+            try? data.write(to: fileURL)
+        }
     }
     
     public func toolbarDidClickClose() {

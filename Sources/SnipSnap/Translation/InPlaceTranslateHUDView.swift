@@ -7,7 +7,7 @@ import Translation
 
 // MARK: - View Model
 
-public class InPlaceTranslateViewModel: ObservableObject {
+public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
     public enum TranslationErrorType: Equatable {
         case none
         case noTextDetected
@@ -33,6 +33,8 @@ public class InPlaceTranslateViewModel: ObservableObject {
     @Published public var toastMessage: String? = nil
     @Published public var translationTrigger: Int = 0
     @Published public var isShowingOriginal: Bool = false
+    @Published public var isStreaming: Bool = false
+    public var activeTask: CancellableTask? = nil
     @Published public var ocrLines: [OCRLineItem] = []
     
     public static func openSystemTranslationSettings() {
@@ -199,7 +201,15 @@ public class InPlaceTranslateViewModel: ObservableObject {
         self.canvasSize = canvasSize
         
         let config = AppConfig.load()
-        self.engineName = (config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty) ? "DeepL 官方" : "Apple 原生翻译"
+        if config.translationProvider == "ai" {
+            let preset = config.aiProviderPreset
+            let name = preset == "deepseek" ? "DeepSeek" : (preset == "openai" ? "OpenAI" : (preset == "ollama" ? "Ollama" : "AI"))
+            self.engineName = "\(name) 大模型"
+        } else if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
+            self.engineName = "DeepL 官方"
+        } else {
+            self.engineName = "Apple 原生翻译"
+        }
         
         let preferred = (targetLang != nil && !targetLang!.isEmpty) ? targetLang! : config.targetTranslateLanguage
         self.targetLang = Self.normalizeLanguageCode(preferred)
@@ -378,6 +388,14 @@ public class InPlaceTranslateViewModel: ObservableObject {
         self.errorMessage = nil
         
         let config = AppConfig.load()
+        if config.translationProvider == "ai" {
+            let preset = config.aiProviderPreset
+            let name = preset == "deepseek" ? "DeepSeek" : (preset == "openai" ? "OpenAI" : (preset == "ollama" ? "Ollama" : "AI"))
+            self.engineName = "\(name) 大模型"
+            translateViaAIStream()
+            return
+        }
+        
         if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
             self.engineName = "DeepL 官方"
             translateViaMultiChannel()
@@ -401,6 +419,58 @@ public class InPlaceTranslateViewModel: ObservableObject {
         
         self.engineName = "内置多通道"
         translateViaMultiChannel()
+    }
+    
+    public func cancelCurrentTranslation() {
+        activeTask?.cancel()
+        activeTask = nil
+        isStreaming = false
+        isLoading = false
+    }
+    
+    public func translateViaAIStream() {
+        let trimmed = originalText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        cancelCurrentTranslation()
+        self.isLoading = true
+        self.isStreaming = true
+        self.errorType = .none
+        self.errorMessage = nil
+        
+        self.activeTask = TranslationService.shared.translateStream(
+            text: trimmed,
+            from: sourceLang,
+            to: targetLang,
+            onChunk: { [weak self] chunk in
+                guard let self = self else { return }
+                if self.isLoading {
+                    self.translatedText = ""
+                    self.isLoading = false
+                }
+                self.translatedText += chunk
+            },
+            completion: { [weak self] result in
+                guard let self = self else { return }
+                self.isLoading = false
+                self.isStreaming = false
+                self.activeTask = nil
+                
+                switch result {
+                case .success(let response):
+                    self.translatedText = response.translatedText
+                    self.errorType = .none
+                    self.errorMessage = nil
+                case .failure(let error):
+                    if (error as NSError).code == NSURLErrorCancelled {
+                        return
+                    }
+                    let desc = error.localizedDescription
+                    self.errorType = .generic(desc)
+                    self.errorMessage = desc
+                }
+            }
+        )
     }
     
     public func translateViaMultiChannel() {
@@ -920,15 +990,32 @@ public struct InPlaceTranslateHUDView: View {
                     .help(L10n("translate.smart_online_help"))
                 } else {
                     // Minimalist subtle engine indicator (icon only with tooltip to save horizontal space)
-                    HStack(spacing: 3.5) {
-                        if viewModel.isLoading {
+                    HStack(spacing: 4) {
+                        if viewModel.isLoading || viewModel.isStreaming {
                             ProgressView()
                                 .scaleEffect(0.5)
                                 .frame(width: 10, height: 10)
                         } else {
-                            Image(systemName: viewModel.engineName.contains("Apple") ? "applelogo" : "globe")
+                            Image(systemName: viewModel.engineName.contains("Apple") ? "applelogo" : (viewModel.engineName.contains("AI") || viewModel.engineName.contains("大模型") ? "sparkles" : "globe"))
                                 .font(.system(size: 9.5))
-                                .foregroundColor(Color.white.opacity(0.60))
+                                .foregroundColor(viewModel.engineName.contains("AI") || viewModel.engineName.contains("大模型") ? Color.purple.opacity(0.85) : Color.white.opacity(0.60))
+                        }
+                        
+                        if viewModel.isStreaming {
+                            Button(action: { viewModel.cancelCurrentTranslation() }) {
+                                HStack(spacing: 2) {
+                                    Image(systemName: "stop.fill")
+                                        .font(.system(size: 7.5))
+                                    Text(L10n("translate.stop_generating"))
+                                        .font(.system(size: 9, weight: .medium))
+                                }
+                                .foregroundColor(.red.opacity(0.9))
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1.5)
+                                .background(Color.red.opacity(0.15))
+                                .cornerRadius(4)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 4)

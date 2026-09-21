@@ -122,6 +122,10 @@ public struct MainControlView: View {
     @State private var deeplTestStatus: String? = nil
     @State private var isTestingDeepL: Bool = false
     @State private var deeplTestSuccess: Bool = false
+    @State private var aiTestStatus: String? = nil
+    @State private var isTestingAI: Bool = false
+    @State private var aiTestSuccess: Bool = false
+    @State private var showAiKey: Bool = false
     @State private var accessibilityGranted: Bool = GlobalHotkeyManager.isAccessibilityGranted
     @State private var hoveredTab: ControlCenterSubTab? = nil
     
@@ -436,9 +440,9 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HotkeyRecorderView(
-                        title: L10n("pref.hotkey.action_translate"),
-                        actionId: "translate",
-                        shortcut: $config.translateShortcut,
+                        title: L10n("pref.hotkey.action_pin"),
+                        actionId: "pin",
+                        shortcut: $config.pinShortcut,
                         config: config
                     ) { _ in
                         saveAndReloadHotkeys()
@@ -447,9 +451,20 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HotkeyRecorderView(
-                        title: L10n("pref.hotkey.action_pin"),
-                        actionId: "pin",
-                        shortcut: $config.pinShortcut,
+                        title: L10n("pref.hotkey.action_scroll_capture"),
+                        actionId: "scrollCapture",
+                        shortcut: $config.scrollCaptureShortcut,
+                        config: config
+                    ) { _ in
+                        saveAndReloadHotkeys()
+                    }
+                    
+                    Divider().opacity(0.3)
+                    
+                    HotkeyRecorderView(
+                        title: L10n("pref.hotkey.action_translate"),
+                        actionId: "translate",
+                        shortcut: $config.translateShortcut,
                         config: config
                     ) { _ in
                         saveAndReloadHotkeys()
@@ -794,6 +809,7 @@ public struct MainControlView: View {
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.translationProvider) {
+                            Text(L10n("pref.ocr.provider_ai")).tag("ai")
                             Text(L10n("pref.ocr.provider_apple")).tag("apple")
                             Text(L10n("pref.ocr.provider_deepl")).tag("deepl")
                         }
@@ -801,6 +817,142 @@ public struct MainControlView: View {
                         .controlSize(.small)
                         .onChange(of: config.translationProvider) { _ in
                             config.save()
+                        }
+                    }
+                    
+                    if config.translationProvider == "ai" {
+                        Divider().opacity(0.3)
+                        
+                        VStack(alignment: .leading, spacing: 10) {
+                            // Preset Picker
+                            HStack {
+                                Text(L10n("pref.ocr.ai_preset"))
+                                    .font(.system(size: 13, weight: .regular))
+                                Spacer()
+                                Picker("", selection: $config.aiProviderPreset) {
+                                    Text("DeepSeek (官方推荐)").tag("deepseek")
+                                    Text("OpenAI (官方 / 代理)").tag("openai")
+                                    Text("Claude (中转 / 代理)").tag("claude")
+                                    Text("Ollama (本地离线私有)").tag("ollama")
+                                    Text("自定义 (Custom)").tag("custom")
+                                }
+                                .pickerStyle(.menu)
+                                .controlSize(.small)
+                                .onChange(of: config.aiProviderPreset) { newPreset in
+                                    switch newPreset {
+                                    case "deepseek":
+                                        config.aiBaseURL = "https://api.deepseek.com"
+                                        config.aiModelName = "deepseek-chat"
+                                    case "openai":
+                                        config.aiBaseURL = "https://api.openai.com/v1"
+                                        config.aiModelName = "gpt-4o-mini"
+                                    case "claude":
+                                        config.aiBaseURL = "https://api.anthropic.com/v1"
+                                        config.aiModelName = "claude-3-5-haiku-20241022"
+                                    case "ollama":
+                                        config.aiBaseURL = "http://localhost:11434/v1"
+                                        config.aiModelName = "qwen2.5:7b"
+                                    default:
+                                        break
+                                    }
+                                    config.save()
+                                    aiTestStatus = nil
+                                }
+                            }
+                            
+                            // API Key Field
+                            HStack {
+                                Text(L10n("pref.ocr.ai_key"))
+                                    .font(.system(size: 13, weight: .regular))
+                                Spacer()
+                                HStack(spacing: 4) {
+                                    if showAiKey {
+                                        TextField(L10n("pref.ocr.ai_key_placeholder"), text: $config.aiApiKey)
+                                            .textFieldStyle(.roundedBorder)
+                                            .controlSize(.small)
+                                            .frame(width: 200)
+                                    } else {
+                                        SecureField(L10n("pref.ocr.ai_key_placeholder"), text: $config.aiApiKey)
+                                            .textFieldStyle(.roundedBorder)
+                                            .controlSize(.small)
+                                            .frame(width: 200)
+                                    }
+                                    Button(action: { showAiKey.toggle() }) {
+                                        Image(systemName: showAiKey ? "eye.slash" : "eye")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .onChange(of: config.aiApiKey) { _ in
+                                    config.save()
+                                    aiTestStatus = nil
+                                }
+                            }
+                            
+                            // Model Name
+                            HStack {
+                                Text(L10n("pref.ocr.ai_model"))
+                                    .font(.system(size: 13, weight: .regular))
+                                Spacer()
+                                TextField("deepseek-chat", text: $config.aiModelName)
+                                    .textFieldStyle(.roundedBorder)
+                                    .controlSize(.small)
+                                    .frame(width: 200)
+                                    .onChange(of: config.aiModelName) { _ in
+                                        config.save()
+                                        aiTestStatus = nil
+                                    }
+                            }
+                            
+                            // Base URL
+                            HStack {
+                                Text(L10n("pref.ocr.ai_base_url"))
+                                    .font(.system(size: 13, weight: .regular))
+                                Spacer()
+                                TextField("https://api.deepseek.com", text: $config.aiBaseURL)
+                                    .textFieldStyle(.roundedBorder)
+                                    .controlSize(.small)
+                                    .frame(width: 200)
+                                    .onChange(of: config.aiBaseURL) { _ in
+                                        config.save()
+                                        aiTestStatus = nil
+                                    }
+                            }
+                            
+                            // Test Connection Button
+                            HStack(spacing: 10) {
+                                Button(action: testAIConnection) {
+                                    HStack(spacing: 5) {
+                                        if isTestingAI {
+                                            ProgressView()
+                                                .scaleEffect(0.5)
+                                                .frame(width: 10, height: 10)
+                                        } else {
+                                            Image(systemName: "sparkles")
+                                        }
+                                        Text(isTestingAI ? L10n("pref.ocr.ai_testing") : L10n("pref.ocr.ai_test_btn"))
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(isTestingAI)
+                                
+                                if let status = aiTestStatus {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: aiTestSuccess ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                            .foregroundColor(aiTestSuccess ? .green : .orange)
+                                            .font(.system(size: 11))
+                                        Text(status)
+                                            .font(.system(size: 11))
+                                            .foregroundColor(aiTestSuccess ? .green : .orange)
+                                            .lineLimit(1)
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding(.top, 2)
                         }
                     }
                     
@@ -965,6 +1117,29 @@ public struct MainControlView: View {
                 case .failure(let err):
                     self.deeplTestSuccess = false
                     self.deeplTestStatus = "连接失败: \(err.localizedDescription)"
+                }
+            }
+        }
+    }
+    
+    private func testAIConnection() {
+        isTestingAI = true
+        aiTestStatus = nil
+        
+        TranslationService.shared.testAIConnection(
+            baseURL: config.aiBaseURL,
+            apiKey: config.aiApiKey,
+            model: config.aiModelName
+        ) { result in
+            DispatchQueue.main.async {
+                self.isTestingAI = false
+                switch result {
+                case .success(let msg):
+                    self.aiTestSuccess = true
+                    self.aiTestStatus = msg
+                case .failure(let err):
+                    self.aiTestSuccess = false
+                    self.aiTestStatus = "连接失败: \(err.localizedDescription)"
                 }
             }
         }

@@ -16,9 +16,10 @@ public struct AppConfig: Codable, Equatable {
     
     // MARK: - 2. Hotkeys (四大金刚全局快捷键 - F1-F4 纯单键体系)
     public var screenshotShortcut: String = "F1"
-    public var translateShortcut: String = "F2"
-    public var pinShortcut: String = "F3"
-    public var togglePinsShortcut: String = "F4"
+    public var pinShortcut: String = "F2"
+    public var scrollCaptureShortcut: String = "F3"
+    public var translateShortcut: String = "F4"
+    public var togglePinsShortcut: String = "F5"
     
     // Compatibility alias for legacy code referencing ocrShortcut
     public var ocrShortcut: String {
@@ -44,9 +45,17 @@ public struct AppConfig: Codable, Equatable {
     public var ocrLanguages: [String] = ["zh-Hans", "en-US", "ja-JP", "ko-KR"]
     public var targetTranslateLanguage: String = "zh-Hans"
     public var autoCopyOCRText: Bool = false
-    public var translationProvider: String = "apple" // "apple", "deepl"
+    public var translationProvider: String = "apple" // "apple", "deepl", "ai"
     public var deeplAuthKey: String = ""
     public var deeplIsFreeAPI: Bool = true
+    
+    // AI Translation (大模型翻译)
+    public var aiProviderPreset: String = "deepseek" // "deepseek", "openai", "claude", "ollama", "custom"
+    public var aiBaseURL: String = "https://api.deepseek.com"
+    public var aiApiKey: String = ""
+    public var aiModelName: String = "deepseek-chat"
+    public var aiTemperature: Double = 0.3
+    public var aiSystemPrompt: String = "You are a professional, accurate, and context-aware translator. Translate the given text faithfully and naturally into the target language. Retain original markdown, LaTeX, and inline code formatting (e.g. `code`). Only return the translated text without any explanation or commentary."
     
     // MARK: - 6. GIF Recording (动图录制设置)
     public var gifFrameRate: Int = 15 // 10, 15, 20, 30
@@ -70,9 +79,18 @@ public struct AppConfig: Codable, Equatable {
         self.imageSaveFormat = (try? container.decodeIfPresent(String.self, forKey: .imageSaveFormat)) ?? "PNG"
         self.defaultSavePath = (try? container.decodeIfPresent(String.self, forKey: .defaultSavePath)) ?? (FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first?.path ?? "")
         self.screenshotShortcut = (try? container.decodeIfPresent(String.self, forKey: .screenshotShortcut)) ?? "F1"
-        self.translateShortcut = (try? container.decodeIfPresent(String.self, forKey: .translateShortcut)) ?? "F2"
-        self.pinShortcut = (try? container.decodeIfPresent(String.self, forKey: .pinShortcut)) ?? "F3"
-        self.togglePinsShortcut = (try? container.decodeIfPresent(String.self, forKey: .togglePinsShortcut)) ?? "F4"
+        self.pinShortcut = (try? container.decodeIfPresent(String.self, forKey: .pinShortcut)) ?? "F2"
+        self.scrollCaptureShortcut = (try? container.decodeIfPresent(String.self, forKey: .scrollCaptureShortcut)) ?? "F3"
+        self.translateShortcut = (try? container.decodeIfPresent(String.self, forKey: .translateShortcut)) ?? "F4"
+        self.togglePinsShortcut = (try? container.decodeIfPresent(String.self, forKey: .togglePinsShortcut)) ?? "F5"
+        
+        // Migration: Ensure new F1-F4 standard layout
+        if self.scrollCaptureShortcut.isEmpty || (self.translateShortcut == "F2" && self.pinShortcut == "F3") {
+            self.pinShortcut = "F2"
+            self.scrollCaptureShortcut = "F3"
+            self.translateShortcut = "F4"
+        }
+        
         self.showLoupe = (try? container.decodeIfPresent(Bool.self, forKey: .showLoupe)) ?? true
         self.loupeColorFormat = (try? container.decodeIfPresent(String.self, forKey: .loupeColorFormat)) ?? "HEX"
         self.defaultStrokeColorHex = (try? container.decodeIfPresent(String.self, forKey: .defaultStrokeColorHex)) ?? "#FF3B30"
@@ -90,6 +108,12 @@ public struct AppConfig: Codable, Equatable {
         self.translationProvider = (prov == "builtin") ? "apple" : prov
         self.deeplAuthKey = (try? container.decodeIfPresent(String.self, forKey: .deeplAuthKey)) ?? ""
         self.deeplIsFreeAPI = (try? container.decodeIfPresent(Bool.self, forKey: .deeplIsFreeAPI)) ?? true
+        self.aiProviderPreset = (try? container.decodeIfPresent(String.self, forKey: .aiProviderPreset)) ?? "deepseek"
+        self.aiBaseURL = (try? container.decodeIfPresent(String.self, forKey: .aiBaseURL)) ?? "https://api.deepseek.com"
+        self.aiApiKey = (try? container.decodeIfPresent(String.self, forKey: .aiApiKey)) ?? ""
+        self.aiModelName = (try? container.decodeIfPresent(String.self, forKey: .aiModelName)) ?? "deepseek-chat"
+        self.aiTemperature = (try? container.decodeIfPresent(Double.self, forKey: .aiTemperature)) ?? 0.3
+        self.aiSystemPrompt = (try? container.decodeIfPresent(String.self, forKey: .aiSystemPrompt)) ?? "You are a professional, accurate, and context-aware translator. Translate the given text faithfully and naturally into the target language. Retain original markdown, LaTeX, and inline code formatting (e.g. `code`). Only return the translated text without any explanation or commentary."
         self.gifFrameRate = (try? container.decodeIfPresent(Int.self, forKey: .gifFrameRate)) ?? 15
         self.gifMaxDuration = (try? container.decodeIfPresent(Int.self, forKey: .gifMaxDuration)) ?? 30
         self.gifDownsample = (try? container.decodeIfPresent(Bool.self, forKey: .gifDownsample)) ?? true
@@ -131,9 +155,10 @@ public struct AppConfig: Codable, Equatable {
         
         let hotkeys: [(id: String, name: String, key: String)] = [
             ("screenshot", "屏幕截图", screenshotShortcut),
+            ("pin", "剪贴板贴图", pinShortcut),
+            ("scrollCapture", "长截图", scrollCaptureShortcut),
             ("translate", "选区翻译", translateShortcut),
             ("ocr", "选区翻译", translateShortcut),
-            ("pin", "剪贴板贴图", pinShortcut),
             ("togglePins", "隐藏/显示所有贴图", togglePinsShortcut)
         ]
         
