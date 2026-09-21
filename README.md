@@ -138,7 +138,7 @@ Unlike heavy Electron-based screen utilities that consume hundreds of megabytes 
 
 ### 8. Preferences, About & Update Checker *(New in v1.1.0)*
 - **Dedicated "About" View**: Features high-resolution app branding, current version & build strings, feature architecture highlights, and MIT license.
-- **Rate-Limit-Free Update Checker**: Zero-token HEAD redirect inspection prevents 403 API rate limits, verifying releases in sub-seconds; includes a status menu item "Check for Updates...".
+- **Rate-Limit-Free Update Checker**: Zero-token HEAD redirect inspection prevents 403 API rate limits, verifying releases in sub-seconds directly within the About tab.
 - **Open Source Community Hub**: One-click shortcuts to the GitHub repository and issue tracker.
 - **Native Preferences & Global Hotkeys**: Adheres to macOS design standards with a 160pt sidebar and SF Pro typography; resilient hotkeys operate seamlessly across full-screen games or IDEs.
 

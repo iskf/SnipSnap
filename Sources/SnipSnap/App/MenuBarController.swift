@@ -10,7 +10,6 @@ public class MenuBarController: NSObject, NSMenuDelegate {
     private var ocrItem: NSMenuItem?
     private var scrollCaptureItem: NSMenuItem?
     private var togglePinsItem: NSMenuItem?
-    private var unlockPinsItem: NSMenuItem?
     private var closePinsItem: NSMenuItem?
     
     private override init() {
@@ -69,22 +68,15 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         self.togglePinsItem = togglePins
         menu.addItem(togglePins)
         
-        let unlockPins = makeMenuItem(title: L10n("menu.unlock_all_pins"), icon: "lock.open", action: #selector(actionUnlockAllPins))
-        self.unlockPinsItem = unlockPins
-        menu.addItem(unlockPins)
-        
         let closePins = makeMenuItem(title: L10n("menu.close_all_pins"), icon: "xmark.circle", action: #selector(actionCloseAllPins))
         self.closePinsItem = closePins
         menu.addItem(closePins)
         
         menu.addItem(NSMenuItem.separator())
         
-        // 4. Preferences, Update & Quit
+        // 4. Preferences & Quit
         let prefItem = makeMenuItem(title: L10n("menu.preferences"), icon: "gearshape", action: #selector(actionPreferences), keyEquivalent: ",", modifiers: [.command])
         menu.addItem(prefItem)
-        
-        let updateItem = makeMenuItem(title: L10n("menu.check_updates"), icon: "arrow.triangle.2.circlepath", action: #selector(actionCheckUpdates))
-        menu.addItem(updateItem)
         
         menu.addItem(NSMenuItem.separator())
         
@@ -113,9 +105,6 @@ public class MenuBarController: NSObject, NSMenuDelegate {
             togglePinsItem?.title = pinMgr.arePinsHidden ? L10n("menu.show_all_pins") : L10n("menu.hide_all_pins")
             setMenuItemIcon(togglePinsItem, symbol: pinMgr.arePinsHidden ? "eye" : "eye.slash")
             togglePinsItem?.isEnabled = true
-            
-            let hasPassThrough = pinMgr.pinWindows.contains { $0.isMousePassThrough }
-            unlockPinsItem?.isEnabled = hasPassThrough
         } else {
             closePinsItem?.title = L10n("menu.close_all_pins")
             closePinsItem?.isEnabled = false
@@ -123,8 +112,6 @@ public class MenuBarController: NSObject, NSMenuDelegate {
             togglePinsItem?.title = L10n("menu.hide_all_pins")
             setMenuItemIcon(togglePinsItem, symbol: "eye.slash")
             togglePinsItem?.isEnabled = false
-            
-            unlockPinsItem?.isEnabled = false
         }
         
         // Dynamic hotkey bindings from AppConfig
