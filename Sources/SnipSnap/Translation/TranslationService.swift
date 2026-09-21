@@ -1,7 +1,4 @@
 import Foundation
-#if compiler(>=6.0) && canImport(Translation)
-import Translation
-#endif
 
 public struct TranslationResponse: Sendable {
     public let translatedText: String
@@ -612,36 +609,6 @@ public class TranslationService: @unchecked Sendable {
         to targetLang: String,
         completion: @escaping (Result<TranslationResponse, Error>) -> Void
     ) {
-        #if compiler(>=6.0) && canImport(Translation)
-        if #available(macOS 26.0, *) {
-            let sCode = (sourceLang == "auto") ? (isSourceChinese ? "zh-Hans" : "en") : normalizeLanguageForApple(sourceLang)
-            let tCode = normalizeLanguageForApple(targetLang)
-            
-            Task {
-                do {
-                    let session = TranslationSession(
-                        installedSource: Locale.Language(identifier: sCode),
-                        target: Locale.Language(identifier: tCode)
-                    )
-                    let response = try await session.translate(text)
-                    let cleaned = TranslationService.postProcessTranslatedText(response.targetText)
-                    DispatchQueue.main.async {
-                        completion(.success(TranslationResponse(
-                            translatedText: cleaned,
-                            sourceLanguage: sCode,
-                            targetLanguage: tCode
-                        )))
-                    }
-                } catch {
-                    // Fallback to builtin multi-channel if offline model isn't installed or error occurs
-                    DispatchQueue.main.async { [weak self] in
-                        self?.translateViaBuiltin(text: text, isSourceChinese: isSourceChinese, from: sourceLang, to: targetLang, completion: completion)
-                    }
-                }
-            }
-            return
-        }
-        #endif
         
         // Fallback for older macOS versions without Translation framework
         translateViaBuiltin(text: text, isSourceChinese: isSourceChinese, from: sourceLang, to: targetLang, completion: completion)
