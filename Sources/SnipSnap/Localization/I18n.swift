@@ -147,6 +147,12 @@ public class I18n: ObservableObject {
             .ja: "環境設定...",
             .ko: "환경설정..."
         ],
+        "menu.check_updates": [
+            .zhHans: "检查更新...",
+            .en: "Check for Updates...",
+            .ja: "アップデートを確認...",
+            .ko: "업데이트 확인..."
+        ],
         "menu.quit": [
             .zhHans: "退出 SnipSnap",
             .en: "Quit SnipSnap",
@@ -202,6 +208,12 @@ public class I18n: ObservableObject {
             .en: "GIF Recording",
             .ja: "GIF録画",
             .ko: "GIF 녹화"
+        ],
+        "pref.tab.about": [
+            .zhHans: "关于",
+            .en: "About",
+            .ja: "情報",
+            .ko: "정보"
         ],
         "pref.recording.quality_group": [
             .zhHans: "画质与性能",
@@ -426,6 +438,180 @@ public class I18n: ObservableObject {
             .en: "Confirm Reset",
             .ja: "リセット実行",
             .ko: "초기화 확인"
+        ],
+        "pref.about.tagline": [
+            .zhHans: "轻量 · 极速 · 无侵入的原生 macOS 截图与贴图工具",
+            .en: "Lightweight, blazing-fast, non-intrusive native macOS capture & pinning tool",
+            .ja: "軽量・高速・非侵入型のネイティブ macOS キャプチャ＆ピン留めツール",
+            .ko: "가볍고 빠른 비침투형 네이티브 macOS 캡처 및 고정 도구"
+        ],
+        "pref.about.intro_card": [
+            .zhHans: "项目特性介绍",
+            .en: "Features & Highlights",
+            .ja: "主な機能と特徴",
+            .ko: "주요 기능 및 특징"
+        ],
+        "pref.about.intro_desc": [
+            .zhHans: "专为 macOS 打造的高性能生产力工具。告别笨重的跨平台框架，带来瞬时呼出的顺滑体验。",
+            .en: "Engineered specifically for macOS. Zero framework overhead, delivering instant and fluid capture workflows.",
+            .ja: "macOS向けにゼロから設計された高性能ツール。クロスプラットフォームの重さを排除し、瞬時の応答性を実現。",
+            .ko: "macOS 전용 고성능 생산성 도구. 무거운 프레임워크 없이 즉각적인 응답성을 제공합니다."
+        ],
+        "pref.about.feat_native_title": [
+            .zhHans: "极致原生性能",
+            .en: "Native Performance",
+            .ja: "ネイティブの圧倒的高速性",
+            .ko: "압도적인 네이티브 성능"
+        ],
+        "pref.about.feat_native_desc": [
+            .zhHans: "纯 Swift + AppKit 深度优化，0ms 启动响应，极低后台内存开销。",
+            .en: "Deeply optimized with pure Swift & AppKit, zero startup lag, ultra-low background memory footprint.",
+            .ja: "Swift & AppKit ネイティブ実装、瞬時の起動、極めて低い常駐メモリ消費。",
+            .ko: "Swift & AppKit 순수 네이티브 구현, 지연 없는 실행, 초저 메모리 점유율."
+        ],
+        "pref.about.feat_hotkey_title": [
+            .zhHans: "硬件级顶排键拦截",
+            .en: "Hardware-Level Intercept",
+            .ja: "ハードウェアレベルのキー遮断",
+            .ko: "하드웨어 수준의 키 가로채기"
+        ],
+        "pref.about.feat_hotkey_desc": [
+            .zhHans: "CGEventTap 深度拦截技术，F1-F4 顶排键无需按 fn 实体键即可直接呼出。",
+            .en: "CGEventTap engine allows top-row function keys (F1-F4) to trigger without holding the physical fn key.",
+            .ja: "CGEventTap 技術により、物理 fn キーを押さずに F1-F4 ファンクションキーで直接呼び出し可能。",
+            .ko: "CGEventTap 기술로 fn 키를 누를 필요 없이 F1-F4 펑션키로 즉시 캡처 실행."
+        ],
+        "pref.about.feat_annotation_title": [
+            .zhHans: "专业精美标注工具集",
+            .en: "Rich Annotation Tools",
+            .ja: "洗練された注釈ツール群",
+            .ko: "세련된 주석 도구 세트"
+        ],
+        "pref.about.feat_annotation_desc": [
+            .zhHans: "矩形、椭圆、箭头、画笔、荧光笔、序号标记与马赛克，全矢量高质渲染。",
+            .en: "Shapes, arrows, pens, highlighters, step counters, and pixel-perfect mosaic tools.",
+            .ja: "矩形、楕円、矢印、ブラシ、蛍光ペン、連番カウンター、モザイクなど多彩な注釈機能。",
+            .ko: "도형, 화살표, 펜, 형광펜, 번호 마커, 모자이크 등 다채로운 벡터 주석 제공."
+        ],
+        "pref.about.feat_scroll_title": [
+            .zhHans: "智能多频特征长截图",
+            .en: "Smart Scrolling Capture",
+            .ja: "インテリジェント長尺キャプチャ",
+            .ko: "스마트 스크롤 캡처"
+        ],
+        "pref.about.feat_scroll_desc": [
+            .zhHans: "自研像素特征比对与缝合算法，支持网页与长文档的顺滑捕捉。",
+            .en: "Multi-band feature matching and stitching algorithm for effortless document & webpage capture.",
+            .ja: "独自の画像特徴照合・合成アルゴリズムにより、Webページや長文ドキュメントを美しく結合。",
+            .ko: "자체 개발한 다중 대역 이미지 정합 알고리즘으로 긴 문서와 웹페이지를 완벽하게 합성."
+        ],
+        "pref.about.feat_ocr_title": [
+            .zhHans: "离线文字识别与翻译",
+            .en: "Offline OCR & Translation",
+            .ja: "完全オフライン OCR・翻訳",
+            .ko: "오프라인 OCR 및 번역"
+        ],
+        "pref.about.feat_ocr_desc": [
+            .zhHans: "基于 Apple Vision 框架的本地离线 OCR 与内置多语言离线字典，隐私安全。",
+            .en: "On-device OCR powered by Apple Vision, complete data privacy with no cloud dependencies.",
+            .ja: "Apple Vision による端末内 OCR 処理と内蔵辞書翻訳、外部通信不要で高い安全性。",
+            .ko: "Apple Vision 기반 온디바이스 OCR 및 내장 번역, 외부 유출 없는 완벽한 개인정보 보호."
+        ],
+        "pref.about.community_card": [
+            .zhHans: "开源社区与支持",
+            .en: "Open Source & Community",
+            .ja: "オープンソースとコミュニティ",
+            .ko: "오픈소스 및 커뮤니티"
+        ],
+        "pref.about.view_github": [
+            .zhHans: "访问 GitHub 仓库",
+            .en: "View on GitHub",
+            .ja: "GitHub リポジトリを開く",
+            .ko: "GitHub 저장소 열기"
+        ],
+        "pref.about.report_issue": [
+            .zhHans: "提交 Issue / 建议",
+            .en: "Report Issue / Feedback",
+            .ja: "Issue / フィードバックを送信",
+            .ko: "이슈 제보 및 피드백"
+        ],
+        "pref.about.license": [
+            .zhHans: "本项目遵循 MIT 开源许可证 · Crafted with ❤️ by iskf",
+            .en: "Released under the MIT License · Crafted with ❤️ by iskf",
+            .ja: "MIT ライセンスに基づいて公開 · Crafted with ❤️ by iskf",
+            .ko: "MIT 라이선스 적용 · Crafted with ❤️ by iskf"
+        ],
+        "pref.about.check_updates": [
+            .zhHans: "检查更新",
+            .en: "Check for Updates",
+            .ja: "アップデートを確認",
+            .ko: "업데이트 확인"
+        ],
+        "pref.about.checking": [
+            .zhHans: "正在检查...",
+            .en: "Checking...",
+            .ja: "確認中...",
+            .ko: "확인 중..."
+        ],
+        "pref.about.version": [
+            .zhHans: "当前版本",
+            .en: "Current Version",
+            .ja: "現在のバージョン",
+            .ko: "현재 버전"
+        ],
+        "update.title.new_version": [
+            .zhHans: "发现新版本 (v%@)",
+            .en: "New Version Available (v%@)",
+            .ja: "新しいバージョンが見つかりました (v%@)",
+            .ko: "새 버전 발견 (v%@)"
+        ],
+        "update.msg.new_version": [
+            .zhHans: "SnipSnap v%@ 已发布！您当前运行的版本为 v%@。\n\n是否立即前往下载最新版本？",
+            .en: "SnipSnap v%@ is now available! You are currently running v%@.\n\nWould you like to download it now?",
+            .ja: "SnipSnap v%@ がリリースされました！現在のバージョンは v%@ です。\n\n今すぐ最新バージョンをダウンロードしますか？",
+            .ko: "SnipSnap v%@ 버전이 출시되었습니다! 현재 사용 중인 버전은 v%@입니다.\n\n지금 다운로드하시겠습니까?"
+        ],
+        "update.btn.download": [
+            .zhHans: "前往下载",
+            .en: "Download",
+            .ja: "ダウンロード",
+            .ko: "다운로드"
+        ],
+        "update.btn.later": [
+            .zhHans: "稍后再说",
+            .en: "Later",
+            .ja: "後で",
+            .ko: "나중에"
+        ],
+        "update.title.up_to_date": [
+            .zhHans: "已是最新版本",
+            .en: "You're Up to Date",
+            .ja: "最新バージョンです",
+            .ko: "최신 버전입니다"
+        ],
+        "update.msg.up_to_date": [
+            .zhHans: "当前运行的 SnipSnap (v%@) 已是最新版本，无需更新。",
+            .en: "SnipSnap (v%@) is currently the newest version available.",
+            .ja: "お使いの SnipSnap (v%@) は最新バージョンです。",
+            .ko: "현재 실행 중인 SnipSnap (v%@)은 최신 버전입니다."
+        ],
+        "update.title.failed": [
+            .zhHans: "检查更新失败",
+            .en: "Update Check Failed",
+            .ja: "アップデートの確認に失敗しました",
+            .ko: "업데이트 확인 실패"
+        ],
+        "update.msg.failed": [
+            .zhHans: "无法连接到更新服务器，请检查网络连接后重试。\n错误信息：%@",
+            .en: "Unable to check for updates. Please check your network connection and try again.\nError: %@",
+            .ja: "アップデートサーバーに接続できませんでした。ネットワーク接続を確認してください。\nエラー: %@",
+            .ko: "업데이트 서버에 연결할 수 없습니다. 네트워크 연결을 확인한 후 다시 시도하세요.\n오류: %@"
+        ],
+        "update.btn.ok": [
+            .zhHans: "好",
+            .en: "OK",
+            .ja: "OK",
+            .ko: "확인"
         ],
         
         // Hotkeys Tab

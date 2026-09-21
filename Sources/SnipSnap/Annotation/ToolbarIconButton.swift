@@ -27,6 +27,15 @@ public class ToolbarIconButton: NSButton {
         }
     }
     
+    public var isProminentAction: Bool = false {
+        didSet {
+            if isProminentAction {
+                layer?.cornerRadius = 6
+            }
+            updateActiveAppearance()
+        }
+    }
+    
     private var trackingArea: NSTrackingArea?
     private var isHovered: Bool = false
     
@@ -45,8 +54,8 @@ public class ToolbarIconButton: NSButton {
         self.isBordered = false
         self.imagePosition = .imageOnly
         
-        let config = NSImage.SymbolConfiguration(pointSize: 12.5, weight: .medium)
-        self.image = NSImage(systemSymbolName: icon, accessibilityDescription: tip)?.withSymbolConfiguration(config)
+        self.image = Self.createNormalizedIcon(named: icon, pointSize: 12.0)
+        self.imageScaling = .scaleNone
         self.contentTintColor = tint
         
         self.wantsLayer = true
@@ -61,6 +70,36 @@ public class ToolbarIconButton: NSButton {
         self.heightAnchor.constraint(equalToConstant: 24).isActive = true
         
         updateActiveAppearance()
+    }
+    
+    /// Normalizes and centers any SF Symbol into an optically balanced square bounding box
+    public static func createNormalizedIcon(named name: String, targetBox: CGFloat = 14.0, pointSize: CGFloat = 12.0) -> NSImage? {
+        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .medium)
+        guard let base = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(config) else {
+            return nil
+        }
+        let w = base.size.width
+        let h = base.size.height
+        guard w > 0, h > 0 else { return base }
+        
+        let maxDim = max(w, h)
+        // Keep proportional scale fitting neatly into targetBox
+        let scale = min(targetBox / maxDim, 1.15)
+        let fittedW = round(w * scale)
+        let fittedH = round(h * scale)
+        
+        let normalized = NSImage(size: NSSize(width: targetBox, height: targetBox), flipped: false) { _ in
+            let drawRect = NSRect(
+                x: (targetBox - fittedW) / 2.0,
+                y: (targetBox - fittedH) / 2.0,
+                width: fittedW,
+                height: fittedH
+            )
+            base.draw(in: drawRect)
+            return true
+        }
+        normalized.isTemplate = true
+        return normalized
     }
     
     required init?(coder: NSCoder) {
@@ -117,12 +156,17 @@ public class ToolbarIconButton: NSButton {
             let scale: CGFloat = isEntering ? 1.06 : 1.0
             self.layer?.setAffineTransform(CGAffineTransform(scaleX: scale, y: scale))
             
-            if !self.isToolActive {
+            if self.isProminentAction {
+                self.layer?.backgroundColor = isEntering
+                    ? NSColor(calibratedRed: 0.16, green: 0.74, blue: 0.46, alpha: 1.0).cgColor
+                    : NSColor(calibratedRed: 0.14, green: 0.65, blue: 0.40, alpha: 0.88).cgColor
+                self.layer?.shadowOpacity = isEntering ? 0.7 : 0.3
+            } else if !self.isToolActive {
                 let hoverColor = isEntering ? NSColor.white.withAlphaComponent(0.12).cgColor : NSColor.clear.cgColor
                 self.layer?.backgroundColor = hoverColor
             }
         }
-        self.contentTintColor = isEntering || isToolActive ? .white : customTint
+        self.contentTintColor = isEntering || isToolActive || isProminentAction ? .white : customTint
     }
     
     private func animatePress(isDown: Bool) {
@@ -134,9 +178,22 @@ public class ToolbarIconButton: NSButton {
     }
     
     private func updateActiveAppearance() {
-        if isToolActive {
+        if isProminentAction {
+            contentTintColor = .white
+            layer?.backgroundColor = isHovered
+                ? NSColor(calibratedRed: 0.16, green: 0.74, blue: 0.46, alpha: 1.0).cgColor
+                : NSColor(calibratedRed: 0.14, green: 0.65, blue: 0.40, alpha: 0.88).cgColor
+            layer?.borderColor = NSColor.white.withAlphaComponent(isHovered ? 0.40 : 0.20).cgColor
+            layer?.borderWidth = 0.6
+            layer?.shadowColor = NSColor(calibratedRed: 0.14, green: 0.65, blue: 0.40, alpha: 0.6).cgColor
+            layer?.shadowOpacity = isHovered ? 0.7 : 0.3
+            layer?.shadowRadius = isHovered ? 4 : 2
+            layer?.shadowOffset = CGSize(width: 0, height: 1)
+        } else if isToolActive {
             contentTintColor = .white
             layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.85).cgColor
+            layer?.borderColor = nil
+            layer?.borderWidth = 0
             layer?.shadowColor = NSColor.systemBlue.cgColor
             layer?.shadowOpacity = 0.6
             layer?.shadowRadius = 5
@@ -144,6 +201,8 @@ public class ToolbarIconButton: NSButton {
         } else {
             contentTintColor = isHovered ? .white : customTint
             layer?.backgroundColor = isHovered ? NSColor.white.withAlphaComponent(0.12).cgColor : NSColor.clear.cgColor
+            layer?.borderColor = nil
+            layer?.borderWidth = 0
             layer?.shadowOpacity = 0.0
         }
     }

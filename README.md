@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>A lightweight, privacy-focused native macOS utility for precision screenshots, GIF screen recording, stepless pinning, on-device OCR, and in-place screen translation.</b>
+  <b>A lightweight, privacy-focused native macOS utility for precision screenshots, scrolling capture, GIF screen recording, stepless pinning, on-device OCR, and in-place screen translation.</b>
 </p>
 
 <p align="center">
@@ -54,7 +54,7 @@
 
 **SnipSnap** is designed from the ground up for macOS using Apple native frameworks: **Swift, AppKit, SwiftUI, ScreenCaptureKit, Vision, and the Translation framework**.
 
-Unlike heavy Electron-based screen utilities that consume hundreds of megabytes of memory, SnipSnap launches instantly, idles with near-zero resource utilization, and operates without mandatory cloud dependencies. It combines the tactile pinning workflow popularized by *Snipaste* with Apple Human Interface Guidelines, subtle illumination styling, and Safari-inspired in-place translation.
+Unlike heavy Electron-based screen utilities that consume hundreds of megabytes of memory, SnipSnap launches instantly, idles with near-zero resource utilization, and operates without mandatory cloud dependencies. It combines the tactile pinning workflow popularized by *Snipaste* with Apple Human Interface Guidelines, subtle illumination styling, intelligent scrolling capture, and Safari-inspired in-place translation.
 
 ---
 
@@ -63,7 +63,7 @@ Unlike heavy Electron-based screen utilities that consume hundreds of megabytes 
 | Precision Capture & Grouped Toolbar | Safari-Style In-Place Screen Translation |
 | :---: | :---: |
 | <img src="docs/images/annotation_toolbar.png" alt="Precision Viewfinder and Grouped Toolbar" width="460" /> | <img src="docs/images/inplace_translation.png" alt="In-Place Translation" width="460" /> |
-| **Pixel-level reticle · 8x loupe inspector · Divider-grouped toolbar** | **On-device Vision OCR · Contextual replacement · Zero-latency toggle** |
+| **Hairline crosshair · Optically normalized icons · Smart centered bar** | **On-device Vision OCR · Contextual replacement · Zero-latency toggle** |
 
 | Desktop Floating Pin & Context Menu | macOS Native Preferences Panel |
 | :---: | :---: |
@@ -83,7 +83,16 @@ Unlike heavy Electron-based screen utilities that consume hundreds of megabytes 
 - **Detached Annotation Toolbar**: Secondary annotations (shapes, arrows, mosaics, text) reside on an independent floating toolbar, eliminating canvas edge clipping.
 - **Text-to-Card Conversion**: Press `F3` when code or text is copied; SnipSnap formats and renders it into a high-contrast code card pinned directly to the screen.
 
-### 2. GIF Screen Recording  *(New in v1.0.2)*
+### 2. Scrolling Capture & Auto-Stitching  *(New in v1.1.0)*
+- **Continuous Downward Stitching**: Select any scrollable region (web page, IDE source code, long documents, chat history) and scroll smoothly while SnipSnap automatically performs multi-frame overlap detection and seamless image stitching.
+- **Robust Stitching Engine**: Built with a proprietary `ScrollingStitcher` featuring multi-stripe sampling correlation and tolerance thresholds, resisting dynamic background noise and accurately locking overlap lines.
+- **Dual-Mode Adaptive HUD**:
+  - **Collapsed Capsule**: Compact indicator displaying live stitch height and frame count with minimal visual occlusion.
+  - **Expanded Preview Roll**: Click or hover to reveal a live, high-resolution thumbnail of the stitched panorama.
+- **Anti-Conflict & Glassmorphism Design**: Double-layer frosted backdrop with a soft edge glow, optimized with high-contrast borders and prominent controls to prevent text conflict even against bright white backgrounds.
+- **Instant Hotkey**: Trigger scrolling capture anytime with `Option + F1` or `Option + S`.
+
+### 3. GIF Screen Recording  *(New in v1.0.2)*
 - **Region-Selective Recording**: Select any screen region and record it directly to an optimized GIF animation, ready to paste or share.
 - **Constant Frame Rate (CFR) Engine**: Rock-solid 15 FPS capture via `DispatchSourceTimer` ensures buttery-smooth playback with no fast-forwarding or frame drops.
 - **ScreenCaptureKit Integration**: Uses Apple's modern `SCStream` API for hardware-accelerated, low-overhead screen capture with precise region cropping.
@@ -95,7 +104,7 @@ Unlike heavy Electron-based screen utilities that consume hundreds of megabytes 
 - **Smart Export**: GIF is automatically copied to clipboard (as both `com.compuserve.gif` data and file URL) and optionally saved to a configured directory.
 - **Configurable**: Frame rate (5–30 FPS), max duration (5–120s), cursor capture, Retina downsampling, auto-copy, auto-save, and sound feedback are all configurable in Preferences.
 
-### 3. In-Place Screen Translation
+### 4. In-Place Screen Translation
 - **In-Situ Text Replacement**: Selected screen text is recognized and replaced directly over the original visual context without external popups.
 - **Native Segmented Switcher**: Instant switching between source text and translated results via mouse click or the `Space` key.
 - **Language Pair Switcher**: Live dropdown supporting English, Simplified Chinese, Japanese, Korean, French, German, Spanish, and Russian, with single-click translation direction inversion (`<->`).
@@ -105,39 +114,45 @@ Unlike heavy Electron-based screen utilities that consume hundreds of megabytes 
   3. **High-Availability Fallback**: Automatic route failover ensuring uninterrupted service.
 - **Non-Obtrusive Fallback**: If text recognition yields empty or low-confidence results, the original screenshot remains 100% visible and unblemished.
 
-### 4. On-Device Offline OCR
+### 5. On-Device Offline OCR
 - **Apple Vision Framework**: Text detection and optical character recognition run locally via the Apple Neural Engine and GPU.
 - **Data Privacy**: Screen contents are processed entirely in-memory and never transmitted to external cloud endpoints.
 - **Multilingual Recognition**: Accurate extraction across Latin, CJK (Chinese, Japanese, Korean), and mixed typographic symbols.
 - **Typographic Line-Break Reconstruction**: Automatically connects soft-wrapped English words with single spaces while joining wrapped Chinese lines without superfluous gaps.
 
-### 5. Vector Annotation Toolkit
-- **High-Contrast Grouped Toolbar**: Organized into 3 discrete functional groups separated by vertical dividers:
+### 6. Vector Annotation Toolkit & UX Polish  *(v1.1.0 Upgrade)*
+- **Hairline Crosshair**: 1px delicate translucent crosshair with a 16px center cutout for unobstructed precision viewfinding.
+- **482pt Compact Main Toolbar**: Trimmed footprint with intelligent auto-centering below small selections, eliminating awkward edge overflows.
+- **Optical Icon Normalization**: Re-weighted bounding boxes across all 16 tool and action icons, balancing geometric shapes (squares, circles, diagonals, text glyphs) into visual harmony.
+- **Emerald Green Prominent Action**: Vibrant emerald green copy-and-done button establishing an intuitive visual focal point.
+- **Subpixel-Centered Secondary Palette**: Dedicated layer-backed segment labels and tabular monospaced digits ensuring text styles ("Plain", "Outline") and font sizes ("14", "18", "24", "32") are mathematically and optically centered.
+- **Comprehensive Annotation Array**:
   - **Drawing Tools**: Rectangle (`R`), Ellipse (`O`), Line (`L`), Arrow (`A`), Brush (`P`), Highlighter (`H`), Text (`T`), Mosaic (`M`), Numbered Steps (`N`).
   - **History**: Unlimited Undo (`Command + Z`) and Redo (`Shift + Command + Z`).
   - **Actions**: Cancel (`Esc`), Record GIF, Save File (`Command + S`), Pin (`F3`), Done and Copy (`Enter`).
-- **Secondary Attribute Palette**: 8 curated color swatches and 3 stroke weight presets, seamlessly docked adjacent to the active tool.
 
-### 6. Precision Loupe & Color Inspector
+### 7. Precision Loupe & Color Inspector
 - **Real-Time 8x Magnifier**: Precise cursor tracking displaying an amplified pixel grid with a center target.
 - **RGB and HEX Readout**: Live coordinate and hexadecimal color inspection under the reticle.
 - **One-Key Copy**: Press `C` to copy the inspected color code directly to the system clipboard.
 
-### 7. System Integration & Preferences
-- **Standard Preferences Window**: Conforms to macOS design principles with a 160pt compact navigation column and SF Pro typography.
-- **Carbon Hotkey Tap**: Low-latency global keyboard shortcuts operating reliably even across full-screen games or IDEs.
-- **Accessory Run Mode**: Operates as a menu bar resident without cluttering the macOS Dock.
+### 8. Preferences, About & Update Checker *(New in v1.1.0)*
+- **Dedicated "About" View**: Features high-resolution app branding, current version & build strings, feature architecture highlights, and MIT license.
+- **Rate-Limit-Free Update Checker**: Zero-token HEAD redirect inspection prevents 403 API rate limits, verifying releases in sub-seconds; includes a status menu item "Check for Updates...".
+- **Open Source Community Hub**: One-click shortcuts to the GitHub repository and issue tracker.
+- **Native Preferences & Global Hotkeys**: Adheres to macOS design standards with a 160pt sidebar and SF Pro typography; resilient hotkeys operate seamlessly across full-screen games or IDEs.
 
 ---
 
 ## Keyboard Shortcuts
 
-### Capture & Annotation
+### Capture, Scrolling & Annotation
 
 | Shortcut | Action |
 | :--- | :--- |
-| `F1` / `Option + A` | Start screen capture |
-| `F2` / `Option + O` | Area OCR and in-place translation |
+| `F1` / `Option + A` | Start standard screen capture |
+| `Option + F1` / `Option + S` | Start scrolling capture *(New in v1.1.0)* |
+| `Shift + F1` / `F2` / `Option + O` | Area OCR and in-place translation |
 | `F3` / `Option + P` | Pin image or convert clipboard text to card |
 | `F4` | Quick translate clipboard text |
 | `C` | Copy HEX color under cursor (Loupe mode) |
@@ -229,10 +244,10 @@ To update in the future:
 brew upgrade --cask snipsnap
 ```
 
-### 2. Manual Download (DMG)
+### 2. Manual DMG Download
 
-1. Download the latest `SnipSnap-1.0.2.dmg` from [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest).
-2. Open the DMG image and drag `SnipSnap.app` into your `/Applications` folder.
+1. Download the latest `SnipSnap-1.1.0.dmg` from [GitHub Releases](https://github.com/iskf/SnipSnap/releases/latest).
+2. Double-click to mount the DMG, then drag `SnipSnap.app` into `/Applications` folder.
 3. Launch SnipSnap from Launchpad or Spotlight.
 
 ### 3. Build from Source

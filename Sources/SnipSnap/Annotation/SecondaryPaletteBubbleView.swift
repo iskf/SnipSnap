@@ -23,6 +23,66 @@ public class SecondaryPaletteButton: NSButton {
     }
 }
 
+// MARK: - VisionOS-style Connected Segmented Capsule Label
+public class CapsuleSegmentLabel: NSView {
+    public var text: String {
+        didSet { needsDisplay = true }
+    }
+    public var font: NSFont {
+        didSet { needsDisplay = true }
+    }
+    @objc public dynamic var textColor: NSColor {
+        didSet { needsDisplay = true }
+    }
+    
+    public init(text: String, font: NSFont, textColor: NSColor) {
+        self.text = text
+        self.font = font
+        self.textColor = textColor
+        super.init(frame: .zero)
+        self.wantsLayer = true
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    public override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
+    }
+    
+    public override class func defaultAnimation(forKey key: NSAnimatablePropertyKey) -> Any? {
+        if key == "textColor" {
+            return CABasicAnimation()
+        }
+        return super.defaultAnimation(forKey: key)
+    }
+    
+    public override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        
+        let style = NSMutableParagraphStyle()
+        style.alignment = .center
+        style.lineBreakMode = .byClipping
+        
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor,
+            .paragraphStyle: style
+        ]
+        
+        let size = (text as NSString).size(withAttributes: attrs)
+        // Mathematically and optically centered horizontally & vertically in segment cell
+        let textRect = NSRect(
+            x: (bounds.width - size.width) / 2.0,
+            y: (bounds.height - size.height) / 2.0,
+            width: size.width,
+            height: size.height
+        )
+        (text as NSString).draw(in: textRect, withAttributes: attrs)
+    }
+}
+
 // MARK: - VisionOS-style Connected Segmented Capsule
 public class CapsuleSegmentedControl: NSView {
     public var onSelectionChanged: ((Int) -> Void)?
@@ -32,7 +92,7 @@ public class CapsuleSegmentedControl: NSView {
     private let itemWidths: [CGFloat]
     
     private let thumbView = NSView()
-    private var itemLabels: [NSTextField] = []
+    private var itemLabels: [CapsuleSegmentLabel] = []
     private var dividers: [NSBox] = []
     private var trackingAreasList: [NSTrackingArea] = []
     
@@ -99,19 +159,17 @@ public class CapsuleSegmentedControl: NSView {
             currentX += itemWidths[i]
         }
         
-        // Item Labels
+        // Item Labels (mathematically and optically centered with subpixel precision)
         currentX = 0
         for (i, text) in items.enumerated() {
             let w = itemWidths[i]
-            let label = NSTextField(labelWithString: text)
-            label.font = NSFont.systemFont(ofSize: 11, weight: .bold)
-            label.alignment = .center
-            label.textColor = (i == selectedIndex) ? .white : NSColor.white.withAlphaComponent(0.65)
-            label.frame = NSRect(x: currentX, y: 1, width: w, height: 20)
-            label.isEditable = false
-            label.isSelectable = false
-            label.isBezeled = false
-            label.drawsBackground = false
+            let isNumeric = text.allSatisfy { $0.isNumber }
+            let font = isNumeric
+                ? NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .bold)
+                : NSFont.systemFont(ofSize: 11, weight: .bold)
+            let color = (i == selectedIndex) ? NSColor.white : NSColor.white.withAlphaComponent(0.65)
+            let label = CapsuleSegmentLabel(text: text, font: font, textColor: color)
+            label.frame = NSRect(x: currentX, y: 0, width: w, height: 22)
             addSubview(label)
             itemLabels.append(label)
             currentX += w

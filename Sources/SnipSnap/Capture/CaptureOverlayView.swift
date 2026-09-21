@@ -718,8 +718,13 @@ public class CaptureOverlayView: NSView, AnnotationToolbarDelegate, AnnotationCa
             return
         }
         
-        // 1. Right-aligned to selection rect (bottom-right corner)
-        let targetX = selectionRect.maxX - tbWidth
+        // 1. Smart horizontal positioning: right-aligned for normal/large selections, centered for small selections
+        let targetX: CGFloat
+        if selectionRect.width >= tbWidth {
+            targetX = selectionRect.maxX - tbWidth
+        } else {
+            targetX = selectionRect.midX - tbWidth / 2.0
+        }
         let tbX = min(max(targetX, 10), bounds.maxX - tbWidth - 10)
         
         // 2. Vertical positioning: check total space needed below for primary (38) + secondary (32) + gaps (14)

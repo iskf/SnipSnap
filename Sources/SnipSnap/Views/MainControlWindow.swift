@@ -9,6 +9,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
     case recording = "动图录制"
     case pinning = "贴图设置"
     case ocr = "OCR与翻译"
+    case about = "关于"
     
     public var id: String { rawValue }
     
@@ -20,6 +21,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
         case .recording: return L10n("pref.tab.recording")
         case .pinning: return L10n("pref.tab.pinning")
         case .ocr: return L10n("pref.tab.ocr")
+        case .about: return L10n("pref.tab.about")
         }
     }
     
@@ -31,6 +33,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
         case .recording: return "record.circle.fill"
         case .pinning: return "pin.fill"
         case .ocr: return "character.book.closed.fill"
+        case .about: return "info.circle.fill"
         }
     }
     
@@ -42,6 +45,7 @@ public enum ControlCenterSubTab: String, CaseIterable, Identifiable {
         case .recording: return Color(nsColor: .systemRed)
         case .pinning: return Color(nsColor: .systemPurple)
         case .ocr: return Color(nsColor: .systemIndigo)
+        case .about: return Color(nsColor: .systemTeal)
         }
     }
 }
@@ -117,6 +121,7 @@ public class MainControlWindowController: NSWindowController, NSWindowDelegate {
 public struct MainControlView: View {
     @ObservedObject var viewModel: MainControlViewModel
     @ObservedObject private var i18n = I18n.shared
+    @ObservedObject private var updater = AppUpdater.shared
     @State private var config = AppConfig.load()
     @State private var showResetAlert: Bool = false
     @State private var deeplTestStatus: String? = nil
@@ -253,6 +258,8 @@ public struct MainControlView: View {
                     pinningSettingsView
                 case .ocr:
                     ocrSettingsView
+                case .about:
+                    aboutSettingsView
                 }
             }
             .padding(.horizontal, 24)
@@ -1142,6 +1149,220 @@ public struct MainControlView: View {
                     self.aiTestStatus = "连接失败: \(err.localizedDescription)"
                 }
             }
+        }
+    }
+    
+    // MARK: - 7. About Settings View
+    
+    private var currentVersionString: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+    }
+    
+    private var currentBuildString: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "4"
+    }
+    
+    private var aboutSettingsView: some View {
+        VStack(spacing: 16) {
+            // Hero Header Card
+            VStack(spacing: 12) {
+                if let icon = NSApp.applicationIconImage {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 80, height: 80)
+                        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(LinearGradient(
+                                colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                            .frame(width: 80, height: 80)
+                            .shadow(color: Color.accentColor.opacity(0.25), radius: 8, x: 0, y: 4)
+                        
+                        Image(systemName: "camera.viewfinder")
+                            .font(.system(size: 38, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
+                
+                VStack(spacing: 4) {
+                    Text("SnipSnap")
+                        .font(.system(size: 22, weight: .bold))
+                    
+                    Text(L10n("pref.about.tagline"))
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                HStack(spacing: 12) {
+                    // Version pill
+                    HStack(spacing: 4) {
+                        Text("\(L10n("pref.about.version")): v\(currentVersionString)")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("(Build \(currentBuildString))")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color(NSColor.separatorColor).opacity(0.4), lineWidth: 0.5)
+                    )
+                    
+                    // Check Updates Button
+                    Button(action: {
+                        updater.checkForUpdates(userInitiated: true)
+                    }) {
+                        HStack(spacing: 5) {
+                            if updater.isChecking {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .scaleEffect(0.7)
+                                Text(L10n("pref.about.checking"))
+                            } else {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                            Text(L10n("pref.about.check_updates"))
+                            }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .disabled(updater.isChecking)
+                }
+                .padding(.top, 2)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
+            )
+            
+            // Features & Highlights Card
+            settingsCard(title: L10n("pref.about.intro_card")) {
+                VStack(spacing: 12) {
+                    aboutFeatureRow(
+                        icon: "bolt.fill",
+                        color: Color.orange,
+                        title: L10n("pref.about.feat_native_title"),
+                        description: L10n("pref.about.feat_native_desc")
+                    )
+                    Divider().opacity(0.3)
+                    aboutFeatureRow(
+                        icon: "keyboard.fill",
+                        color: Color.green,
+                        title: L10n("pref.about.feat_hotkey_title"),
+                        description: L10n("pref.about.feat_hotkey_desc")
+                    )
+                    Divider().opacity(0.3)
+                    aboutFeatureRow(
+                        icon: "paintpalette.fill",
+                        color: Color.blue,
+                        title: L10n("pref.about.feat_annotation_title"),
+                        description: L10n("pref.about.feat_annotation_desc")
+                    )
+                    Divider().opacity(0.3)
+                    aboutFeatureRow(
+                        icon: "arrow.down.doc.fill",
+                        color: Color.purple,
+                        title: L10n("pref.about.feat_scroll_title"),
+                        description: L10n("pref.about.feat_scroll_desc")
+                    )
+                    Divider().opacity(0.3)
+                    aboutFeatureRow(
+                        icon: "character.book.closed.fill",
+                        color: Color.indigo,
+                        title: L10n("pref.about.feat_ocr_title"),
+                        description: L10n("pref.about.feat_ocr_desc")
+                    )
+                }
+            }
+            
+            // Community & Open Source Card
+            settingsCard(title: L10n("pref.about.community_card")) {
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            if let url = URL(string: "https://github.com/iskf/SnipSnap") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "chevron.left.forwardslash.chevron.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                                Text(L10n("pref.about.view_github"))
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        
+                        Button(action: {
+                            if let url = URL(string: "https://github.com/iskf/SnipSnap/issues") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "bubble.left.and.bubble.right.fill")
+                                    .font(.system(size: 11))
+                                Text(L10n("pref.about.report_issue"))
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        
+                        Spacer()
+                    }
+                    
+                    Divider().opacity(0.3)
+                    
+                    HStack {
+                        Text(L10n("pref.about.license"))
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                }
+            }
+        }
+    }
+    
+    private func aboutFeatureRow(icon: String, color: Color, title: String, description: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(color.opacity(0.15))
+                    .frame(width: 26, height: 26)
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            .padding(.top, 1)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                Text(description)
+                    .font(.system(size: 11.5))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
         }
     }
     

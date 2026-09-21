@@ -68,7 +68,7 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
     // Layout
     private let mainRowStack = NSStackView()
     
-    public static let standardWidth: CGFloat = 532.0
+    public static let standardWidth: CGFloat = 482.0
     public static let standardHeight: CGFloat = 38.0
     
     public init(delegate: AnnotationToolbarDelegate?) {
@@ -122,8 +122,8 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         mainRowStack.addArrangedSubview(makeDivider(height: 14))
         
         // Group 1: 标注区 (Drawing tools with keycap badges)
-        addToolButton(.rectangle, icon: "rectangle", tipKey: "toolbar.tool.rectangle", keycap: "R")
-        addToolButton(.ellipse, icon: "oval", tipKey: "toolbar.tool.ellipse", keycap: "O")
+        addToolButton(.rectangle, icon: "square", tipKey: "toolbar.tool.rectangle", keycap: "R")
+        addToolButton(.ellipse, icon: "circle", tipKey: "toolbar.tool.ellipse", keycap: "O")
         addToolButton(.arrow, icon: "arrow.up.right", tipKey: "toolbar.tool.arrow", keycap: "A")
         addToolButton(.line, icon: "line.diagonal", tipKey: "toolbar.tool.line", keycap: "L")
         addToolButton(.brush, icon: "pencil", tipKey: "toolbar.tool.brush", keycap: "P")
@@ -147,7 +147,7 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         addActionButton(icon: "record.circle.fill", tipKey: "toolbar.action.record_gif", tint: NSColor(calibratedRed: 1.0, green: 0.28, blue: 0.28, alpha: 0.95), action: #selector(btnRecordGIFClicked))
         addActionButton(icon: "square.and.arrow.down", tipKey: "toolbar.action.save", keycap: "⌘S", action: #selector(btnSaveClicked))
         addActionButton(icon: "pin", tipKey: "toolbar.action.pin", keycap: "F2", action: #selector(btnPinClicked))
-        addActionButton(icon: "checkmark", tipKey: "toolbar.action.copy", keycap: "Enter", action: #selector(btnCopyClicked))
+        addActionButton(icon: "checkmark", tipKey: "toolbar.action.copy", keycap: "Enter", isProminent: true, action: #selector(btnCopyClicked))
     }
     
     // MARK: - UI Helpers
@@ -181,8 +181,9 @@ public class AnnotationToolbarView: NSView, SecondaryPaletteDelegate {
         mainRowStack.addArrangedSubview(btn)
     }
     
-    private func addActionButton(icon: String, tipKey: String, keycap: String? = nil, tint: NSColor = NSColor.white.withAlphaComponent(0.85), action: Selector) {
+    private func addActionButton(icon: String, tipKey: String, keycap: String? = nil, isProminent: Bool = false, tint: NSColor = NSColor.white.withAlphaComponent(0.85), action: Selector) {
         let btn = ToolbarIconButton(icon: icon, tipKey: tipKey, keycap: keycap, tint: tint, target: self, action: action)
+        btn.isProminentAction = isProminent
         mainRowStack.addArrangedSubview(btn)
     }
     

@@ -41,6 +41,10 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
                 MainControlWindowController.show(tab: .pinning)
             } else if CommandLine.arguments.contains("--ocr") {
                 MainControlWindowController.show(tab: .ocr)
+            } else if CommandLine.arguments.contains("--about") {
+                MainControlWindowController.show(tab: .about)
+            } else if CommandLine.arguments.contains("--preferences") {
+                MainControlWindowController.show(tab: .general)
             } else if let pinIdx = CommandLine.arguments.firstIndex(of: "--pin-file"), pinIdx + 1 < CommandLine.arguments.count {
                 let path = CommandLine.arguments[pinIdx + 1]
                 if let img = NSImage(contentsOfFile: path) {

@@ -79,9 +79,12 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         
         menu.addItem(NSMenuItem.separator())
         
-        // 4. Preferences & Quit
+        // 4. Preferences, Update & Quit
         let prefItem = makeMenuItem(title: L10n("menu.preferences"), icon: "gearshape", action: #selector(actionPreferences), keyEquivalent: ",", modifiers: [.command])
         menu.addItem(prefItem)
+        
+        let updateItem = makeMenuItem(title: L10n("menu.check_updates"), icon: "arrow.triangle.2.circlepath", action: #selector(actionCheckUpdates))
+        menu.addItem(updateItem)
         
         menu.addItem(NSMenuItem.separator())
         
@@ -260,6 +263,10 @@ public class MenuBarController: NSObject, NSMenuDelegate {
     
     @objc private func actionPreferences() {
         MainControlWindowController.show(tab: .general)
+    }
+    
+    @objc private func actionCheckUpdates() {
+        AppUpdater.shared.checkForUpdates(userInitiated: true)
     }
     
     @objc private func actionQuit() {
