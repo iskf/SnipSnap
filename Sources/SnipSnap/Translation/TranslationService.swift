@@ -1,5 +1,5 @@
 import Foundation
-#if canImport(Translation)
+#if compiler(>=6.0) && canImport(Translation)
 import Translation
 #endif
 
@@ -612,7 +612,7 @@ public class TranslationService: @unchecked Sendable {
         to targetLang: String,
         completion: @escaping (Result<TranslationResponse, Error>) -> Void
     ) {
-        #if canImport(Translation)
+        #if compiler(>=6.0) && canImport(Translation)
         if #available(macOS 26.0, *) {
             let sCode = (sourceLang == "auto") ? (isSourceChinese ? "zh-Hans" : "en") : normalizeLanguageForApple(sourceLang)
             let tCode = normalizeLanguageForApple(targetLang)

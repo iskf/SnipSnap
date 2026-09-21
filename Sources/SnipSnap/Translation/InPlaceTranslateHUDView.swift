@@ -1,7 +1,7 @@
 import Cocoa
 import SwiftUI
 import NaturalLanguage
-#if canImport(Translation)
+#if compiler(>=6.0) && canImport(Translation)
 import Translation
 #endif
 
@@ -409,7 +409,7 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
             return
         }
         
-        #if canImport(Translation)
+        #if compiler(>=6.0) && canImport(Translation)
         if #available(macOS 15.0, *) {
             self.engineName = "Apple 原生翻译"
             self.translationTrigger += 1
@@ -552,7 +552,7 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
     }
 }
 
-#if canImport(Translation)
+#if compiler(>=6.0) && canImport(Translation)
 @available(macOS 15.0, *)
 private struct AppleNativeTranslationModifier: ViewModifier {
     @ObservedObject var viewModel: InPlaceTranslateViewModel
@@ -784,7 +784,7 @@ public struct InPlaceTranslateHUDView: View {
         }
         .padding(8)
         
-        #if canImport(Translation)
+        #if compiler(>=6.0) && canImport(Translation)
         if #available(macOS 15.0, *) {
             content.modifier(AppleNativeTranslationModifier(viewModel: viewModel))
         } else {
