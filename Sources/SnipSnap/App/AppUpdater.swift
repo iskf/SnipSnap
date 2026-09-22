@@ -15,7 +15,7 @@ public class AppUpdater: ObservableObject {
     @Published public var lastCheckedDate: Date? = nil
     
     public var currentVersion: String {
-        return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
     }
     
     public static let repoOwner = "iskf"

@@ -111,6 +111,12 @@ public class I18n: ObservableObject {
             .ja: "選択範囲の翻訳",
             .ko: "선택 영역 번역"
         ],
+        "menu.input_translate": [
+            .zhHans: "输入框翻译与替换",
+            .en: "Input Translate & Replace",
+            .ja: "入力欄の翻訳と置換",
+            .ko: "입력란 번역 및 교체"
+        ],
         "menu.scroll_capture": [
             .zhHans: "长截图",
             .en: "Scrolling Capture",
@@ -693,6 +699,12 @@ public class I18n: ObservableObject {
             .ja: "すべてのピンの表示切替",
             .ko: "모든 고정 표시 전환"
         ],
+        "pref.hotkey.action_input_translate": [
+            .zhHans: "⑤ 输入框就地翻译",
+            .en: "⑤ In-Place Input Translate",
+            .ja: "⑤ 入力欄インプレース翻訳",
+            .ko: "⑤ 입력창 인플레이스 번역"
+        ],
         "pref.hotkey.tips_card": [
             .zhHans: "快捷键录制提示",
             .en: "Hotkey Recording Tips",
@@ -1041,11 +1053,113 @@ public class I18n: ObservableObject {
             .ja: "デフォルト翻訳先言語",
             .ko: "기본 번역 대상 언어"
         ],
+        "pref.ocr.target_card": [
+            .zhHans: "目标语言与智能对穿",
+            .en: "Target Language & Smart Bi-directional Swap",
+            .ja: "翻訳先言語とスマート双方向反転",
+            .ko: "번역 대상 언어 및 스마트 양방향 반전"
+        ],
+        "pref.ocr.target_screenshot": [
+            .zhHans: "截图翻译默认目标",
+            .en: "Screenshot Translation Target",
+            .ja: "キャプチャ翻訳のデフォルト先",
+            .ko: "캡처 번역 기본 대상"
+        ],
+        "pref.ocr.target_input": [
+            .zhHans: "输入框翻译默认目标",
+            .en: "Input Translation Target",
+            .ja: "入力欄翻訳のデフォルト先",
+            .ko: "입력창 번역 기본 대상"
+        ],
+        "pref.ocr.smart_swap": [
+            .zhHans: "智能双向对穿 (母语翻目标语，目标语翻回母语)",
+            .en: "Smart Bi-directional Swap (Native to Target, Target to Native)",
+            .ja: "スマート双方向反転を有効化 (母国語→対象言語、対象言語→母国語)",
+            .ko: "스마트 양방향 반전 활성화 (모국어→대상 언어, 대상 언어→모국어)"
+        ],
+        "pref.ocr.smart_swap_desc": [
+            .zhHans: "在输入框中输入中文时自动翻为目标语（如英文）；当输入或粘贴外文时，自动反转翻译回中文，无需手动频繁切换。",
+            .en: "Automatically translates native text to target language, and foreign text back to native language, eliminating manual switching.",
+            .ja: "母国語が入力された場合は対象言語へ、外国語が入力された場合は母国語へ自動反転します。",
+            .ko: "모국어 입력 시 대상 언어로, 외국어 입력 시 모국어로 자동 반전되어 수동 전환이 필요 없습니다."
+        ],
+        "pref.ocr.recent_langs_tip": [
+            .zhHans: "最近使用的目标语言将自动置顶展示于快捷菜单中。",
+            .en: "Recently used target languages are automatically pinned to the top.",
+            .ja: "最近使用した言語はメニュー上部に自動固定されます。",
+            .ko: "최근 사용한 언어는 메뉴 상단에 자동으로 고정됩니다."
+        ],
         "pref.ocr.smart_tip": [
             .zhHans: "智能语言匹配：截图中检测到中文将自动翻译为英文；检测到外文将自动翻译为中文。卡片内支持一键双向互换。",
             .en: "Smart matching: Automatically translates Chinese to English and foreign languages to Chinese. Card supports one-click swap.",
             .ja: "スマート言語判定: 中国語は英語へ、外国語は母国語へ自動翻訳。カード内でワンクリック双方向切り替え対応。",
             .ko: "스마트 언어 감지: 화면에서 언어를 자동 감지하여 번역합니다. 카드 내에서 원클릭 상호 전환을 지원합니다."
+        ],
+        "input_translate.title": [
+            .zhHans: "输入框就地翻译",
+            .en: "In-Place Input Translate",
+            .ja: "入力欄インプレース翻訳",
+            .ko: "입력창 인플레이스 번역"
+        ],
+        "input_translate.replace": [
+            .zhHans: "替换 (↵)",
+            .en: "Replace (↵)",
+            .ja: "置換 (↵)",
+            .ko: "교체 (↵)"
+        ],
+        "input_translate.replace_help": [
+            .zhHans: "按回车将译文写回输入框",
+            .en: "Press Enter to replace input text",
+            .ja: "Enterで入力欄に反映",
+            .ko: "Enter로 입력창에 반영"
+        ],
+        "input_translate.cancel_help": [
+            .zhHans: "按 Esc 取消",
+            .en: "Press Esc to cancel",
+            .ja: "Escでキャンセル",
+            .ko: "Esc로 취소"
+        ],
+        "input_translate.no_text": [
+            .zhHans: "未检测到输入框文本",
+            .en: "No input text captured",
+            .ja: "入力テキストが見つかりません",
+            .ko: "입력 텍스트를 찾을 수 없습니다"
+        ],
+        "input_translate.placeholder": [
+            .zhHans: "键入或粘贴待翻译文本，按 Return 翻译与替换...",
+            .en: "Type or paste text to translate, press Return...",
+            .ja: "翻訳するテキストを入力または貼り付け、Returnを押してください...",
+            .ko: "번역할 텍스트를 입력하거나 붙여넣고 Return을 누르세요..."
+        ],
+        "input_translate.guide_hint": [
+            .zhHans: "在任意输入框中选中文本按 ⇧F4 即可就地翻译并替换",
+            .en: "Select text in any input field and press ⇧F4 to translate & replace in-place",
+            .ja: "任意の入力欄でテキストを選択し ⇧F4 を押すと、その場で翻訳して置換できます",
+            .ko: "입력창에서 텍스트를 선택하고 ⇧F4를 누르면 바로 번역 및 교체할 수 있습니다"
+        ],
+        "input_translate.footer_hint": [
+            .zhHans: "↵ 替换输入框 · Space 原文/译文 · ⌘C 复制 · ⎋ 关闭",
+            .en: "↵ Replace · Space Original · ⌘C Copy · ⎋ Close",
+            .ja: "↵ 入力欄に置換 · Space 原文/訳文 · ⌘C コピー · ⎋ 閉じる",
+            .ko: "↵ 입력창에 교체 · Space 원문/번역 · ⌘C 복사 · ⎋ 닫기"
+        ],
+        "input_translate.action_translate": [
+            .zhHans: "翻译",
+            .en: "Translate",
+            .ja: "翻訳",
+            .ko: "번역"
+        ],
+        "input_translate.action_cancel": [
+            .zhHans: "取消",
+            .en: "Cancel",
+            .ja: "キャンセル",
+            .ko: "취소"
+        ],
+        "input_translate.translating": [
+            .zhHans: "正在翻译...",
+            .en: "Translating...",
+            .ja: "翻訳中...",
+            .ko: "번역 중..."
         ],
         "pref.ocr.lang_zh_hans": [
             .zhHans: "简体中文 + 英文",
@@ -1529,11 +1643,29 @@ public class I18n: ObservableObject {
             .ja: "Apple ネイティブ翻訳",
             .ko: "Apple 기본 번역"
         ],
+        "translate.engine.ai": [
+            .zhHans: "AI 大模型",
+            .en: "AI Translation",
+            .ja: "AI 翻訳",
+            .ko: "AI 번역"
+        ],
         "translate.engine.deepl": [
             .zhHans: "DeepL 官方翻译",
             .en: "DeepL Translation",
             .ja: "DeepL 公式翻訳",
             .ko: "DeepL 공식 번역"
+        ],
+        "translate.engine.switch_help": [
+            .zhHans: "切换翻译引擎 (Tab 键快速切换)",
+            .en: "Switch translation engine (Tab key to switch)",
+            .ja: "翻訳エンジンの切り替え (Tabキーで切替)",
+            .ko: "번역 엔진 전환 (Tab 키로 전환)"
+        ],
+        "translate.engine.configure_more": [
+            .zhHans: "配置更多翻译引擎...",
+            .en: "Configure More Engines...",
+            .ja: "翻訳エンジンの詳細設定...",
+            .ko: "더 많은 번역 엔진 설정..."
         ],
         "translate.err.offline_missing": [
             .zhHans: "离线包未下载",

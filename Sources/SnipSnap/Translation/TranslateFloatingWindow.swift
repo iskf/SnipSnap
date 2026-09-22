@@ -6,6 +6,7 @@ import SwiftUI
 public class TranslateFloatingWindow: NSWindow {
     public var onCloseRequested: (() -> Void)?
     public var onSpacePressed: (() -> Void)?
+    public var onTabPressed: (() -> Void)?
     
     public init(contentRect: NSRect) {
         super.init(
@@ -36,6 +37,10 @@ public class TranslateFloatingWindow: NSWindow {
             onSpacePressed?()
             return
         }
+        if event.keyCode == 48 { // Tab
+            onTabPressed?()
+            return
+        }
         super.keyDown(with: event)
     }
 }
@@ -59,6 +64,9 @@ public class TranslateFloatingWindowController: NSWindowController {
         }
         window.onSpacePressed = { [weak self] in
             self?.viewModel.toggleShowingOriginal()
+        }
+        window.onTabPressed = { [weak self] in
+            self?.viewModel.cycleNextEngine()
         }
         
         setupMonitors()
@@ -86,7 +94,7 @@ public class TranslateFloatingWindowController: NSWindowController {
             }
         }
         
-        // Local monitor: Esc key or Spacebar
+        // Local monitor: Esc key, Spacebar, or Tab key
         localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 { // Esc
                 self?.closeWindow()
@@ -94,6 +102,10 @@ public class TranslateFloatingWindowController: NSWindowController {
             }
             if event.keyCode == 49 { // Spacebar
                 self?.viewModel.toggleShowingOriginal()
+                return nil
+            }
+            if event.keyCode == 48 { // Tab
+                self?.viewModel.cycleNextEngine()
                 return nil
             }
             return event

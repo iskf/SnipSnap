@@ -139,6 +139,7 @@ public class TranslationService: @unchecked Sendable {
         text: String,
         from sourceLang: String = "auto",
         to targetLang: String? = nil,
+        provider: String? = nil,
         completion: @escaping @Sendable (Result<TranslationResponse, Error>) -> Void
     ) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -148,6 +149,7 @@ public class TranslationService: @unchecked Sendable {
         }
         
         let config = AppConfig.load()
+        let effectiveProvider = provider ?? config.translationProvider
         let isSourceChinese = detectIsChinese(trimmed)
         
         // Smart automatic language pairing
@@ -159,7 +161,7 @@ public class TranslationService: @unchecked Sendable {
             resolvedTarget = isSourceChinese ? "en" : "zh-Hans"
         }
         
-        if config.translationProvider == "ai" {
+        if effectiveProvider == "ai" {
             _ = aiProvider.translate(
                 text: trimmed,
                 from: resolvedSource,
@@ -167,7 +169,7 @@ public class TranslationService: @unchecked Sendable {
                 options: TranslationOptions(isStreaming: false),
                 completion: completion
             )
-        } else if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
+        } else if effectiveProvider == "deepl" && !config.deeplAuthKey.isEmpty {
             translateViaDeepL(text: trimmed, authKey: config.deeplAuthKey, isFree: config.deeplIsFreeAPI, from: resolvedSource, to: resolvedTarget) { [weak self] result in
                 switch result {
                 case .success(let resp):
@@ -189,6 +191,7 @@ public class TranslationService: @unchecked Sendable {
         text: String,
         from sourceLang: String = "auto",
         to targetLang: String? = nil,
+        provider: String? = nil,
         onChunk: @escaping @Sendable (String) -> Void,
         completion: @escaping @Sendable (Result<TranslationResponse, Error>) -> Void
     ) -> CancellableTask? {
@@ -199,6 +202,7 @@ public class TranslationService: @unchecked Sendable {
         }
         
         let config = AppConfig.load()
+        let effectiveProvider = provider ?? config.translationProvider
         let isSourceChinese = detectIsChinese(trimmed)
         let resolvedSource = sourceLang
         let resolvedTarget: String
@@ -208,7 +212,7 @@ public class TranslationService: @unchecked Sendable {
             resolvedTarget = isSourceChinese ? "en" : "zh-Hans"
         }
         
-        if config.translationProvider == "ai" {
+        if effectiveProvider == "ai" {
             let options = TranslationOptions(isStreaming: true, onStreamChunk: onChunk)
             return aiProvider.translate(
                 text: trimmed,
@@ -218,7 +222,7 @@ public class TranslationService: @unchecked Sendable {
                 completion: completion
             )
         } else {
-            translate(text: trimmed, from: sourceLang, to: targetLang) { result in
+            translate(text: trimmed, from: sourceLang, to: targetLang, provider: effectiveProvider) { result in
                 if case .success(let resp) = result {
                     onChunk(resp.translatedText)
                 }

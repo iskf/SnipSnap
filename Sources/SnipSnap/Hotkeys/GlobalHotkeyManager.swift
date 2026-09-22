@@ -11,6 +11,7 @@ public class GlobalHotkeyManager {
     public var onSelectionTranslate: (() -> Void)?
     public var onQuickOCR: (() -> Void)?
     public var onToggleAllPins: (() -> Void)?
+    public var onInputTranslate: (() -> Void)?
     
     // Carbon State
     private var hotKeyRefs: [EventHotKeyRef] = []
@@ -101,6 +102,11 @@ public class GlobalHotkeyManager {
         // 5. Toggle All Pins (F5)
         registerAction("togglePins", shortcutString: config.togglePinsShortcut) { [weak self] in
             self?.onToggleAllPins?()
+        }
+        
+        // 6. In-Place Input Translate (⇧F4)
+        registerAction("inputTranslate", shortcutString: config.inputTranslateShortcut) { [weak self] in
+            self?.onInputTranslate?()
         }
         
         // Setup hardware level CGEventTap
@@ -340,6 +346,8 @@ public class GlobalHotkeyManager {
                 }
             case "togglePins":
                 self?.onToggleAllPins?()
+            case "inputTranslate":
+                self?.onInputTranslate?()
             default:
                 break
             }

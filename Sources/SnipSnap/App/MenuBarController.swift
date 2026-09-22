@@ -8,6 +8,7 @@ public class MenuBarController: NSObject, NSMenuDelegate {
     private var snapItem: NSMenuItem?
     private var pinItem: NSMenuItem?
     private var ocrItem: NSMenuItem?
+    private var inputTranslateItem: NSMenuItem?
     private var scrollCaptureItem: NSMenuItem?
     private var togglePinsItem: NSMenuItem?
     private var closePinsItem: NSMenuItem?
@@ -60,6 +61,10 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         let translate = makeMenuItem(title: L10n("menu.selection_translate"), icon: "translate", action: #selector(actionSelectionTranslate))
         self.ocrItem = translate
         menu.addItem(translate)
+        
+        let inputTranslate = makeMenuItem(title: L10n("menu.input_translate"), icon: "character.cursor.ibeam", action: #selector(actionInputTranslate))
+        self.inputTranslateItem = inputTranslate
+        menu.addItem(inputTranslate)
         
         menu.addItem(NSMenuItem.separator())
         
@@ -127,6 +132,9 @@ public class MenuBarController: NSObject, NSMenuDelegate {
         }
         if let item = ocrItem {
             applyShortcut(to: item, shortcutString: config.translateShortcut)
+        }
+        if let item = inputTranslateItem {
+            applyShortcut(to: item, shortcutString: config.inputTranslateShortcut)
         }
         if let item = togglePinsItem {
             applyShortcut(to: item, shortcutString: config.togglePinsShortcut)
@@ -223,6 +231,16 @@ public class MenuBarController: NSObject, NSMenuDelegate {
     @objc private func actionSelectionTranslate() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
             CaptureOverlayWindowController.startCapture(mode: .translate)
+        }
+    }
+    
+    @objc private func actionInputTranslate() {
+        if let targetApp = InputTranslateService.shared.currentOrLastActiveApp {
+            targetApp.activate(options: .activateIgnoringOtherApps)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+            let context = InputTranslateService.shared.captureFocusedInputContext()
+            InputTranslateWindowController.show(with: context)
         }
     }
     

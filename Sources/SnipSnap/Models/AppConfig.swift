@@ -20,6 +20,7 @@ public struct AppConfig: Codable, Equatable {
     public var scrollCaptureShortcut: String = "F3"
     public var translateShortcut: String = "F4"
     public var togglePinsShortcut: String = "F5"
+    public var inputTranslateShortcut: String = "⇧F4"
     
     // Compatibility alias for legacy code referencing ocrShortcut
     public var ocrShortcut: String {
@@ -44,6 +45,9 @@ public struct AppConfig: Codable, Equatable {
     // MARK: - 5. OCR & Translation (OCR与翻译)
     public var ocrLanguages: [String] = ["zh-Hans", "en-US", "ja-JP", "ko-KR"]
     public var targetTranslateLanguage: String = "zh-Hans"
+    public var inputTranslateTargetLanguage: String = "en"
+    public var smartBiDirectionalSwap: Bool = true
+    public var recentTargetLanguages: [String] = ["en", "zh-Hans", "ja"]
     public var autoCopyOCRText: Bool = false
     public var translationProvider: String = "apple" // "apple", "deepl", "ai"
     public var deeplAuthKey: String = ""
@@ -83,6 +87,7 @@ public struct AppConfig: Codable, Equatable {
         self.scrollCaptureShortcut = (try? container.decodeIfPresent(String.self, forKey: .scrollCaptureShortcut)) ?? "F3"
         self.translateShortcut = (try? container.decodeIfPresent(String.self, forKey: .translateShortcut)) ?? "F4"
         self.togglePinsShortcut = (try? container.decodeIfPresent(String.self, forKey: .togglePinsShortcut)) ?? "F5"
+        self.inputTranslateShortcut = (try? container.decodeIfPresent(String.self, forKey: .inputTranslateShortcut)) ?? "⇧F4"
         
         // Migration: Ensure new F1-F4 standard layout
         if self.scrollCaptureShortcut.isEmpty || (self.translateShortcut == "F2" && self.pinShortcut == "F3") {
@@ -103,6 +108,9 @@ public struct AppConfig: Codable, Equatable {
         self.doubleClickPinAction = (try? container.decodeIfPresent(String.self, forKey: .doubleClickPinAction)) ?? "zoom"
         self.ocrLanguages = (try? container.decodeIfPresent([String].self, forKey: .ocrLanguages)) ?? ["zh-Hans", "en-US", "ja-JP", "ko-KR"]
         self.targetTranslateLanguage = (try? container.decodeIfPresent(String.self, forKey: .targetTranslateLanguage)) ?? "zh-Hans"
+        self.inputTranslateTargetLanguage = (try? container.decodeIfPresent(String.self, forKey: .inputTranslateTargetLanguage)) ?? "en"
+        self.smartBiDirectionalSwap = (try? container.decodeIfPresent(Bool.self, forKey: .smartBiDirectionalSwap)) ?? true
+        self.recentTargetLanguages = (try? container.decodeIfPresent([String].self, forKey: .recentTargetLanguages)) ?? ["en", "zh-Hans", "ja"]
         self.autoCopyOCRText = (try? container.decodeIfPresent(Bool.self, forKey: .autoCopyOCRText)) ?? false
         let prov = (try? container.decodeIfPresent(String.self, forKey: .translationProvider)) ?? "apple"
         self.translationProvider = (prov == "builtin") ? "apple" : prov
@@ -142,6 +150,16 @@ public struct AppConfig: Codable, Equatable {
         }
     }
     
+    public mutating func recordRecentTargetLanguage(_ lang: String) {
+        var recents = recentTargetLanguages.filter { $0.lowercased() != lang.lowercased() }
+        recents.insert(lang, at: 0)
+        if recents.count > 4 {
+            recents = Array(recents.prefix(4))
+        }
+        self.recentTargetLanguages = recents
+        save()
+    }
+    
     public mutating func resetToDefaults() {
         self = AppConfig()
         save()
@@ -159,7 +177,8 @@ public struct AppConfig: Codable, Equatable {
             ("scrollCapture", "长截图", scrollCaptureShortcut),
             ("translate", "选区翻译", translateShortcut),
             ("ocr", "选区翻译", translateShortcut),
-            ("togglePins", "隐藏/显示所有贴图", togglePinsShortcut)
+            ("togglePins", "隐藏/显示所有贴图", togglePinsShortcut),
+            ("inputTranslate", "输入框翻译与替换", inputTranslateShortcut)
         ]
         
         for item in hotkeys {

@@ -5,6 +5,22 @@ import NaturalLanguage
 import Translation
 #endif
 
+// MARK: - Available Translation Engine Item
+
+public struct AvailableEngineItem: Identifiable, Hashable, Sendable {
+    public let id: String
+    public let displayName: String
+    public let shortName: String
+    public let iconName: String
+    
+    public init(id: String, displayName: String, shortName: String, iconName: String) {
+        self.id = id
+        self.displayName = displayName
+        self.shortName = shortName
+        self.iconName = iconName
+    }
+}
+
 // MARK: - View Model
 
 public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
@@ -30,12 +46,76 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
     @Published public var isLoading: Bool = false
     @Published public var errorMessage: String? = nil
     @Published public var engineName: String = "Apple 原生翻译"
+    @Published public var selectedProvider: String = "apple"
     @Published public var toastMessage: String? = nil
     @Published public var translationTrigger: Int = 0
     @Published public var isShowingOriginal: Bool = false
     @Published public var isStreaming: Bool = false
     public var activeTask: CancellableTask? = nil
     @Published public var ocrLines: [OCRLineItem] = []
+    
+    public var availableEngines: [AvailableEngineItem] {
+        var items: [AvailableEngineItem] = [
+            AvailableEngineItem(id: "apple", displayName: L10n("translate.engine.apple"), shortName: "Apple", iconName: "applelogo")
+        ]
+        let config = AppConfig.load()
+        if let url = AITranslationProvider.resolveEndpoint(from: config.aiBaseURL) {
+            let isLocalhost = url.host == "localhost" || url.host == "127.0.0.1"
+            let hasKey = !config.aiApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            if isLocalhost || hasKey {
+                let preset = config.aiProviderPreset
+                let name = preset == "deepseek" ? "DeepSeek" : (preset == "openai" ? "OpenAI" : (preset == "ollama" ? "Ollama" : "AI"))
+                items.append(AvailableEngineItem(id: "ai", displayName: "\(name) \(L10n("translate.engine.ai"))", shortName: name, iconName: "sparkles"))
+            }
+        }
+        if !config.deeplAuthKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            items.append(AvailableEngineItem(id: "deepl", displayName: L10n("translate.engine.deepl"), shortName: "DeepL", iconName: "globe"))
+        }
+        return items
+    }
+    
+    public var currentEngineItem: AvailableEngineItem {
+        if let found = availableEngines.first(where: { $0.id == selectedProvider }) {
+            return found
+        }
+        let fallbackIcon = selectedProvider == "ai" ? "sparkles" : (selectedProvider == "deepl" ? "globe" : "applelogo")
+        return AvailableEngineItem(id: selectedProvider, displayName: engineName, shortName: selectedProvider.capitalized, iconName: fallbackIcon)
+    }
+    
+    public func cycleNextEngine() {
+        let engines = availableEngines
+        guard engines.count > 1 else { return }
+        if let currentIndex = engines.firstIndex(where: { $0.id == selectedProvider }) {
+            let nextIndex = (currentIndex + 1) % engines.count
+            changeEngine(engines[nextIndex].id)
+        } else if let first = engines.first {
+            changeEngine(first.id)
+        }
+    }
+    
+    public func changeEngine(_ newProvider: String) {
+        guard selectedProvider != newProvider else { return }
+        cancelCurrentTranslation()
+        selectedProvider = newProvider
+        updateEngineDisplayName()
+        translatedText = ""
+        errorMessage = nil
+        errorType = .none
+        performTranslation()
+    }
+    
+    public func updateEngineDisplayName() {
+        if selectedProvider == "ai" {
+            let config = AppConfig.load()
+            let preset = config.aiProviderPreset
+            let name = preset == "deepseek" ? "DeepSeek" : (preset == "openai" ? "OpenAI" : (preset == "ollama" ? "Ollama" : "AI"))
+            self.engineName = "\(name) 大模型"
+        } else if selectedProvider == "deepl" {
+            self.engineName = "DeepL 官方"
+        } else {
+            self.engineName = "Apple 原生翻译"
+        }
+    }
     
     public static func openSystemTranslationSettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.Localization-Settings.extension"),
@@ -201,15 +281,8 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
         self.canvasSize = canvasSize
         
         let config = AppConfig.load()
-        if config.translationProvider == "ai" {
-            let preset = config.aiProviderPreset
-            let name = preset == "deepseek" ? "DeepSeek" : (preset == "openai" ? "OpenAI" : (preset == "ollama" ? "Ollama" : "AI"))
-            self.engineName = "\(name) 大模型"
-        } else if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
-            self.engineName = "DeepL 官方"
-        } else {
-            self.engineName = "Apple 原生翻译"
-        }
+        self.selectedProvider = config.translationProvider
+        updateEngineDisplayName()
         
         let preferred = (targetLang != nil && !targetLang!.isEmpty) ? targetLang! : config.targetTranslateLanguage
         self.targetLang = Self.normalizeLanguageCode(preferred)
@@ -388,7 +461,7 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
         self.errorMessage = nil
         
         let config = AppConfig.load()
-        if config.translationProvider == "ai" {
+        if selectedProvider == "ai" {
             let preset = config.aiProviderPreset
             let name = preset == "deepseek" ? "DeepSeek" : (preset == "openai" ? "OpenAI" : (preset == "ollama" ? "Ollama" : "AI"))
             self.engineName = "\(name) 大模型"
@@ -396,16 +469,16 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
             return
         }
         
-        if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
+        if selectedProvider == "deepl" && !config.deeplAuthKey.isEmpty {
             self.engineName = "DeepL 官方"
-            translateViaMultiChannel()
+            translateViaMultiChannel(provider: "deepl")
             return
         }
         
         // If low confidence and online auto-detection is triggered, directly use multi-channel online engine to avoid Apple's broken out-of-process popup
         if self.isUsingOnlineAutoDetection && self.sourceLang == "auto" {
             self.engineName = "智能在线"
-            translateViaMultiChannel()
+            translateViaMultiChannel(provider: "apple")
             return
         }
         
@@ -418,7 +491,7 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
         #endif
         
         self.engineName = "内置多通道"
-        translateViaMultiChannel()
+        translateViaMultiChannel(provider: "apple")
     }
     
     public func cancelCurrentTranslation() {
@@ -442,6 +515,7 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
             text: trimmed,
             from: sourceLang,
             to: targetLang,
+            provider: "ai",
             onChunk: { [weak self] chunk in
                 guard let self = self else { return }
                 if self.isLoading {
@@ -473,16 +547,18 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
         )
     }
     
-    public func translateViaMultiChannel() {
+    public func translateViaMultiChannel(provider: String? = nil) {
         let trimmed = originalText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         
         self.isLoading = true
+        let effProvider = provider ?? selectedProvider
         
         TranslationService.shared.translate(
             text: trimmed,
             from: sourceLang,
-            to: targetLang
+            to: targetLang,
+            provider: effProvider
         ) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -492,8 +568,7 @@ public class InPlaceTranslateViewModel: ObservableObject, @unchecked Sendable {
                     self.translatedText = response.translatedText
                     self.errorType = .none
                     self.errorMessage = nil
-                    let config = AppConfig.load()
-                    if config.translationProvider == "deepl" && !config.deeplAuthKey.isEmpty {
+                    if effProvider == "deepl" {
                         self.engineName = "DeepL 官方"
                     } else if self.isUsingOnlineFallbackDueToMissingPack {
                         self.engineName = "在线备用"
@@ -572,26 +647,36 @@ private struct AppleNativeTranslationModifier: ViewModifier {
             .onChange(of: viewModel.sourceLang) { _, _ in
                 triggerTranslation()
             }
+            .onChange(of: viewModel.selectedProvider) { _, _ in
+                triggerTranslation()
+            }
             .translationTask(config) { session in
+                guard viewModel.selectedProvider == "apple" else { return }
                 do {
                     let response = try await session.translate(viewModel.originalText)
                     DispatchQueue.main.async {
+                        guard viewModel.selectedProvider == "apple" else { return }
                         viewModel.isLoading = false
                         viewModel.translatedText = TranslationService.postProcessTranslatedText(response.targetText)
                         viewModel.engineName = "Apple 原生翻译"
                     }
                 } catch {
                     DispatchQueue.main.async {
+                        guard viewModel.selectedProvider == "apple" else { return }
                         viewModel.isUsingOnlineFallbackDueToMissingPack = true
                         viewModel.errorType = .none
                         viewModel.errorMessage = nil
-                        viewModel.translateViaMultiChannel()
+                        viewModel.translateViaMultiChannel(provider: "apple")
                     }
                 }
             }
     }
     
     private func triggerTranslation() {
+        guard viewModel.selectedProvider == "apple" else {
+            config = nil
+            return
+        }
         guard !viewModel.originalText.isEmpty else { return }
         // Explicit concrete source language - NEVER pass nil to avoid Apple's broken out-of-process sheet!
         let effectiveSource = (viewModel.sourceLang == "auto") ? viewModel.detectedSourceLang : viewModel.sourceLang
@@ -600,7 +685,15 @@ private struct AppleNativeTranslationModifier: ViewModifier {
         
         let sCode = Locale.Language(identifier: sNorm)
         let tCode = Locale.Language(identifier: tNorm)
-        config = TranslationSession.Configuration(source: sCode, target: tCode)
+        let newConfig = TranslationSession.Configuration(source: sCode, target: tCode)
+        if config == newConfig {
+            config = nil
+            DispatchQueue.main.async {
+                self.config = newConfig
+            }
+        } else {
+            config = newConfig
+        }
     }
 }
 #endif
@@ -618,14 +711,14 @@ private struct OriginalTranslatedSegmentedPicker: View {
                 }
             }) {
                 Text(L10n("translate.tab.original"))
-                    .font(.system(size: 10, weight: viewModel.isShowingOriginal ? .semibold : .regular))
-                    .foregroundColor(viewModel.isShowingOriginal ? .white : Color.white.opacity(0.55))
+                    .font(.system(size: 10.5, weight: viewModel.isShowingOriginal ? .bold : .medium))
+                    .foregroundColor(viewModel.isShowingOriginal ? .white : Color.white.opacity(0.72))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2.8)
                     .background(
                         viewModel.isShowingOriginal
-                            ? RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.24))
-                            : RoundedRectangle(cornerRadius: 6).fill(Color.clear)
+                            ? RoundedRectangle(cornerRadius: 5).fill(Color.white.opacity(0.26))
+                            : RoundedRectangle(cornerRadius: 5).fill(Color.clear)
                     )
             }
             .buttonStyle(.plain)
@@ -637,24 +730,24 @@ private struct OriginalTranslatedSegmentedPicker: View {
                 }
             }) {
                 Text(L10n("translate.tab.translated"))
-                    .font(.system(size: 10, weight: !viewModel.isShowingOriginal ? .semibold : .regular))
-                    .foregroundColor(!viewModel.isShowingOriginal ? .white : Color.white.opacity(0.55))
+                    .font(.system(size: 10.5, weight: !viewModel.isShowingOriginal ? .bold : .medium))
+                    .foregroundColor(!viewModel.isShowingOriginal ? .white : Color.white.opacity(0.72))
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2.8)
                     .background(
                         !viewModel.isShowingOriginal
-                            ? RoundedRectangle(cornerRadius: 6).fill(Color.white.opacity(0.24))
-                            : RoundedRectangle(cornerRadius: 6).fill(Color.clear)
+                            ? RoundedRectangle(cornerRadius: 5).fill(Color.white.opacity(0.26))
+                            : RoundedRectangle(cornerRadius: 5).fill(Color.clear)
                     )
             }
             .buttonStyle(.plain)
         }
-        .padding(1.2)
-        .background(Color.white.opacity(0.08))
-        .cornerRadius(7)
+        .padding(1.5)
+        .background(Color.black.opacity(0.35))
+        .cornerRadius(6.5)
         .overlay(
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(Color.white.opacity(0.12), lineWidth: 0.6)
+            RoundedRectangle(cornerRadius: 6.5)
+                .stroke(Color.white.opacity(0.18), lineWidth: 0.6)
         )
         .animation(.easeInOut(duration: 0.14), value: viewModel.isShowingOriginal)
         .help(L10n("translate.switch_help"))
@@ -667,7 +760,7 @@ private struct UnifiedLanguagePairPicker: View {
     @State private var isSwapHovered: Bool = false
     
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 2.5) {
             // 1. Source language menu (Allows manual user selection!)
             Menu {
                 Button(action: {
@@ -700,12 +793,12 @@ private struct UnifiedLanguagePairPicker: View {
                 }
             } label: {
                 Text(viewModel.sourceLanguageDisplayName)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 10.5, weight: .semibold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 5)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 2.8)
-                    .background(Color.white.opacity(0.12))
-                    .cornerRadius(5.5)
+                    .background(Color.white.opacity(0.16))
+                    .cornerRadius(5)
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
@@ -716,11 +809,11 @@ private struct UnifiedLanguagePairPicker: View {
                 viewModel.swapLanguages()
             }) {
                 Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 8, weight: .semibold))
-                    .foregroundColor(isSwapHovered ? .white : Color.white.opacity(0.65))
-                    .padding(.horizontal, 3.5)
+                    .font(.system(size: 8.5, weight: .bold))
+                    .foregroundColor(isSwapHovered ? .white : Color.white.opacity(0.85))
+                    .padding(.horizontal, 4)
                     .padding(.vertical, 2.8)
-                    .background(isSwapHovered ? Color.white.opacity(0.15) : Color.clear)
+                    .background(isSwapHovered ? Color.white.opacity(0.20) : Color.clear)
                     .cornerRadius(4.5)
             }
             .buttonStyle(.plain)
@@ -743,24 +836,108 @@ private struct UnifiedLanguagePairPicker: View {
                 }
             } label: {
                 Text(viewModel.targetLanguageDisplayName)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 10.5, weight: .semibold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 5)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 2.8)
-                    .background(Color.white.opacity(0.12))
-                    .cornerRadius(5.5)
+                    .background(Color.white.opacity(0.16))
+                    .cornerRadius(5)
             }
             .menuStyle(.borderlessButton)
             .fixedSize()
             .help("\(L10n("translate.change_target")) (\(viewModel.targetLanguageDisplayName))")
         }
-        .padding(1.2)
-        .background(Color.white.opacity(0.08))
-        .cornerRadius(7)
+        .padding(1.5)
+        .background(Color.black.opacity(0.35))
+        .cornerRadius(6.5)
         .overlay(
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(Color.white.opacity(0.12), lineWidth: 0.6)
+            RoundedRectangle(cornerRadius: 6.5)
+                .stroke(Color.white.opacity(0.18), lineWidth: 0.6)
         )
+    }
+}
+
+// MARK: - Native Apple-Style Engine Switcher Menu [  Apple ▾ ]
+private struct EngineSwitcherMenu: View {
+    @ObservedObject var viewModel: InPlaceTranslateViewModel
+    
+    var body: some View {
+        HStack(spacing: 3) {
+            Menu {
+                ForEach(viewModel.availableEngines) { engine in
+                    Button(action: {
+                        viewModel.changeEngine(engine.id)
+                    }) {
+                        HStack {
+                            Text(engine.displayName)
+                            if viewModel.selectedProvider == engine.id {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+                
+                Divider()
+                
+                Button(action: {
+                    PreferencesWindowController.show()
+                }) {
+                    HStack {
+                        Text(L10n("translate.engine.configure_more"))
+                        Image(systemName: "gearshape")
+                    }
+                }
+            } label: {
+                HStack(spacing: 3.5) {
+                    if viewModel.isLoading || viewModel.isStreaming {
+                        ProgressView()
+                            .scaleEffect(0.45)
+                            .frame(width: 9, height: 9)
+                    } else {
+                        Image(systemName: viewModel.currentEngineItem.iconName)
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(viewModel.selectedProvider == "ai" ? Color(red: 0.78, green: 0.58, blue: 1.0) : (viewModel.selectedProvider == "deepl" ? Color(red: 0.40, green: 0.78, blue: 1.0) : .white))
+                    }
+                    
+                    Text(viewModel.currentEngineItem.shortName)
+                        .font(.system(size: 10.5, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundColor(Color.white.opacity(0.85))
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2.8)
+                .background(Color.white.opacity(0.16))
+                .cornerRadius(5.5)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 5.5)
+                        .stroke(Color.white.opacity(0.18), lineWidth: 0.5)
+                )
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help("\(L10n("translate.current_engine")): \(viewModel.currentEngineItem.displayName)\n\(L10n("translate.engine.switch_help"))")
+            
+            if viewModel.isStreaming {
+                Button(action: { viewModel.cancelCurrentTranslation() }) {
+                    HStack(spacing: 2.5) {
+                        Image(systemName: "stop.fill")
+                            .font(.system(size: 7.5))
+                        Text(L10n("translate.stop_generating"))
+                            .font(.system(size: 9.5, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color.red.opacity(0.75))
+                    .cornerRadius(4.5)
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 
@@ -822,19 +999,19 @@ public struct InPlaceTranslateHUDView: View {
                             .font(.system(size: 8.5))
                             .foregroundColor(.orange)
                         Text(L10n("translate.err.offline_missing"))
-                            .font(.system(size: 9.5, weight: .medium))
+                            .font(.system(size: 9.5, weight: .semibold))
                             .foregroundColor(.orange)
                         Text(L10n("translate.err.go_download"))
                             .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 4.5)
                             .padding(.vertical, 1.5)
-                            .background(Color.orange.opacity(0.40))
+                            .background(Color.orange.opacity(0.55))
                             .cornerRadius(4)
                     }
                     .padding(.horizontal, 5.5)
                     .padding(.vertical, 2.5)
-                    .background(Color.orange.opacity(0.16))
+                    .background(Color.orange.opacity(0.22))
                     .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
@@ -846,7 +1023,7 @@ public struct InPlaceTranslateHUDView: View {
                         .font(.system(size: 8.5))
                         .foregroundColor(.yellow)
                     Text(L10n("translate.err.no_text"))
-                        .font(.system(size: 9.5, weight: .medium))
+                        .font(.system(size: 9.5, weight: .semibold))
                         .foregroundColor(.yellow)
                     
                     Button(action: {
@@ -864,7 +1041,7 @@ public struct InPlaceTranslateHUDView: View {
                 }
                 .padding(.horizontal, 5.5)
                 .padding(.vertical, 2.5)
-                .background(Color.yellow.opacity(0.16))
+                .background(Color.yellow.opacity(0.22))
                 .cornerRadius(6)
 
             case .sameLanguage:
@@ -873,7 +1050,7 @@ public struct InPlaceTranslateHUDView: View {
                         .font(.system(size: 8.5))
                         .foregroundColor(.cyan)
                     Text(L10n("translate.err.same_lang"))
-                        .font(.system(size: 9.5, weight: .medium))
+                        .font(.system(size: 9.5, weight: .semibold))
                         .foregroundColor(.cyan)
                     
                     Button(action: {
@@ -884,7 +1061,7 @@ public struct InPlaceTranslateHUDView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 4.5)
                             .padding(.vertical, 1.5)
-                            .background(Color.cyan.opacity(0.40))
+                            .background(Color.cyan.opacity(0.50))
                             .cornerRadius(4)
                     }
                     .buttonStyle(.plain)
@@ -892,7 +1069,7 @@ public struct InPlaceTranslateHUDView: View {
                 }
                 .padding(.horizontal, 5.5)
                 .padding(.vertical, 2.5)
-                .background(Color.cyan.opacity(0.16))
+                .background(Color.cyan.opacity(0.22))
                 .cornerRadius(6)
 
             case .networkOffline:
@@ -901,7 +1078,7 @@ public struct InPlaceTranslateHUDView: View {
                         .font(.system(size: 8.5))
                         .foregroundColor(.red)
                     Text(L10n("translate.err.network"))
-                        .font(.system(size: 9.5, weight: .medium))
+                        .font(.system(size: 9.5, weight: .semibold))
                         .foregroundColor(.red)
                     
                     Button(action: {
@@ -919,7 +1096,7 @@ public struct InPlaceTranslateHUDView: View {
                 }
                 .padding(.horizontal, 5.5)
                 .padding(.vertical, 2.5)
-                .background(Color.red.opacity(0.16))
+                .background(Color.red.opacity(0.22))
                 .cornerRadius(6)
 
             case .generic(let desc):
@@ -928,7 +1105,7 @@ public struct InPlaceTranslateHUDView: View {
                         .font(.system(size: 8.5))
                         .foregroundColor(.yellow)
                     Text(desc.count > 12 ? String(desc.prefix(10)) + "..." : desc)
-                        .font(.system(size: 9.5, weight: .medium))
+                        .font(.system(size: 9.5, weight: .semibold))
                         .foregroundColor(.yellow)
                     
                     Button(action: {
@@ -946,7 +1123,7 @@ public struct InPlaceTranslateHUDView: View {
                 }
                 .padding(.horizontal, 5.5)
                 .padding(.vertical, 2.5)
-                .background(Color.yellow.opacity(0.16))
+                .background(Color.yellow.opacity(0.22))
                 .cornerRadius(6)
 
             case .none:
@@ -960,15 +1137,15 @@ public struct InPlaceTranslateHUDView: View {
                                 .font(.system(size: 8.5))
                                 .foregroundColor(.cyan)
                             Text(L10n("translate.fallback_online"))
-                                .font(.system(size: 9.5, weight: .medium))
+                                .font(.system(size: 9.5, weight: .semibold))
                                 .foregroundColor(.cyan)
                             Image(systemName: "arrow.up.right")
                                 .font(.system(size: 7.5, weight: .bold))
-                                .foregroundColor(Color.cyan.opacity(0.85))
+                                .foregroundColor(Color.cyan.opacity(0.95))
                         }
                         .padding(.horizontal, 5.5)
                         .padding(.vertical, 2.5)
-                        .background(Color.cyan.opacity(0.15))
+                        .background(Color.cyan.opacity(0.22))
                         .cornerRadius(6)
                     }
                     .buttonStyle(.plain)
@@ -980,47 +1157,16 @@ public struct InPlaceTranslateHUDView: View {
                             .font(.system(size: 8.5))
                             .foregroundColor(.cyan)
                         Text(L10n("translate.smart_online"))
-                            .font(.system(size: 9.5, weight: .medium))
+                            .font(.system(size: 9.5, weight: .semibold))
                             .foregroundColor(.cyan)
                     }
                     .padding(.horizontal, 5.5)
                     .padding(.vertical, 2.5)
-                    .background(Color.cyan.opacity(0.15))
+                    .background(Color.cyan.opacity(0.22))
                     .cornerRadius(6)
                     .help(L10n("translate.smart_online_help"))
                 } else {
-                    // Minimalist subtle engine indicator (icon only with tooltip to save horizontal space)
-                    HStack(spacing: 4) {
-                        if viewModel.isLoading || viewModel.isStreaming {
-                            ProgressView()
-                                .scaleEffect(0.5)
-                                .frame(width: 10, height: 10)
-                        } else {
-                            Image(systemName: viewModel.engineName.contains("Apple") ? "applelogo" : (viewModel.engineName.contains("AI") || viewModel.engineName.contains("大模型") ? "sparkles" : "globe"))
-                                .font(.system(size: 9.5))
-                                .foregroundColor(viewModel.engineName.contains("AI") || viewModel.engineName.contains("大模型") ? Color.purple.opacity(0.85) : Color.white.opacity(0.60))
-                        }
-                        
-                        if viewModel.isStreaming {
-                            Button(action: { viewModel.cancelCurrentTranslation() }) {
-                                HStack(spacing: 2) {
-                                    Image(systemName: "stop.fill")
-                                        .font(.system(size: 7.5))
-                                    Text(L10n("translate.stop_generating"))
-                                        .font(.system(size: 9, weight: .medium))
-                                }
-                                .foregroundColor(.red.opacity(0.9))
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 1.5)
-                                .background(Color.red.opacity(0.15))
-                                .cornerRadius(4)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2.5)
-                    .help("\(L10n("translate.current_engine")): \(viewModel.engineName)")
+                    EngineSwitcherMenu(viewModel: viewModel)
                 }
             }
             
@@ -1035,7 +1181,7 @@ public struct InPlaceTranslateHUDView: View {
                 }
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
-                .background(Color.black.opacity(0.75))
+                .background(Color.black.opacity(0.85))
                 .cornerRadius(5)
                 .transition(.opacity)
             }
@@ -1049,18 +1195,18 @@ public struct InPlaceTranslateHUDView: View {
                 }) {
                     HStack(spacing: 3) {
                         Image(systemName: "doc.on.doc")
-                            .font(.system(size: 9))
+                            .font(.system(size: 9, weight: .medium))
                         Text(L10n("translate.copy"))
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10.5, weight: .semibold))
                     }
-                    .foregroundColor(Color.white.opacity(0.90))
-                    .padding(.horizontal, 6.5)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 7)
                     .padding(.vertical, 3)
-                    .background(Color.white.opacity(0.09))
-                    .cornerRadius(6.5)
+                    .background(Color.white.opacity(0.16))
+                    .cornerRadius(6)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6.5)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 0.5)
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.white.opacity(0.18), lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -1072,10 +1218,10 @@ public struct InPlaceTranslateHUDView: View {
                 viewModel.onClose?()
             }) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 7.5, weight: .bold))
-                    .foregroundColor(Color.white.opacity(0.75))
-                    .padding(4)
-                    .background(Color.white.opacity(0.10))
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(4.5)
+                    .background(Color.white.opacity(0.16))
                     .clipShape(Circle())
             }
             .buttonStyle(.plain)
@@ -1085,16 +1231,27 @@ public struct InPlaceTranslateHUDView: View {
         .padding(.vertical, 2)
         .background(
             ZStack {
-                TranslateHUDVisualEffectView()
-                Color(NSColor(calibratedWhite: 0.12, alpha: 0.88))
+                // Solid dark opaque foundation (prevents desktop / window content bleed-through)
+                Color(NSColor(calibratedRed: 0.11, green: 0.11, blue: 0.13, alpha: 0.98))
+                
+                // Subtle top-to-bottom inner lighting highlight
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.10),
+                        Color.clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
             }
         )
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.16), lineWidth: 0.8)
+                .stroke(Color.white.opacity(0.24), lineWidth: 0.8)
         )
-        .shadow(color: Color.black.opacity(0.4), radius: 6, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.60), radius: 10, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(0.25), radius: 2, x: 0, y: 1)
         .frame(height: 28)
         .gesture(
             DragGesture(minimumDistance: 2)

@@ -96,6 +96,13 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
                 str.draw(in: NSRect(x: 20, y: 40, width: 300, height: 100), withAttributes: attrs)
                 img.unlockFocus()
                 TranslateFloatingWindowController.show(image: img, nearScreenRect: NSRect(x: 500, y: 400, width: 340, height: 180))
+            } else if CommandLine.arguments.contains("--test-input-translate") {
+                let context = FocusedInputContext(
+                    text: "Design aesthetics and typography. Fast and responsive macOS native translation.",
+                    screenRect: NSRect(x: 500, y: 300, width: 400, height: 40),
+                    focusedElement: nil
+                )
+                InputTranslateWindowController.show(with: context)
             } else {
                 MainControlWindowController.show(tab: .general)
             }
@@ -163,6 +170,13 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeys.onToggleAllPins = {
             DispatchQueue.main.async {
                 PinWindowManager.shared.toggleAllPinsVisibility()
+            }
+        }
+        
+        hotkeys.onInputTranslate = {
+            DispatchQueue.main.async {
+                let context = InputTranslateService.shared.captureFocusedInputContext()
+                InputTranslateWindowController.show(with: context)
             }
         }
         

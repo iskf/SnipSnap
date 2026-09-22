@@ -480,6 +480,17 @@ public struct MainControlView: View {
                     Divider().opacity(0.3)
                     
                     HotkeyRecorderView(
+                        title: L10n("pref.hotkey.action_input_translate"),
+                        actionId: "inputTranslate",
+                        shortcut: $config.inputTranslateShortcut,
+                        config: config
+                    ) { _ in
+                        saveAndReloadHotkeys()
+                    }
+                    
+                    Divider().opacity(0.3)
+                    
+                    HotkeyRecorderView(
                         title: L10n("pref.hotkey.action_toggle_pins"),
                         actionId: "togglePins",
                         shortcut: $config.togglePinsShortcut,
@@ -1067,21 +1078,24 @@ public struct MainControlView: View {
                         }
                     }
                     
-                    Divider().opacity(0.3)
-                    
+                }
+            }
+            
+            settingsCard(title: L10n("pref.ocr.target_card")) {
+                VStack(spacing: 12) {
                     HStack {
-                        Text(L10n("pref.ocr.target_lang"))
+                        Text(L10n("pref.ocr.target_screenshot"))
                             .font(.system(size: 13, weight: .regular))
                         Spacer()
                         Picker("", selection: $config.targetTranslateLanguage) {
                             Text("中文 (简体)").tag("zh-Hans")
-                            Text("英语 (English)").tag("en-US")
-                            Text("日语 (日本語)").tag("ja-JP")
-                            Text("韩语 (한국어)").tag("ko-KR")
-                            Text("法语 (Français)").tag("fr-FR")
-                            Text("德语 (Deutsch)").tag("de-DE")
-                            Text("西班牙语 (Español)").tag("es-ES")
-                            Text("俄语 (Русский)").tag("ru-RU")
+                            Text("英语 (English)").tag("en")
+                            Text("日语 (日本語)").tag("ja")
+                            Text("韩语 (한국어)").tag("ko")
+                            Text("法语 (Français)").tag("fr")
+                            Text("德语 (Deutsch)").tag("de")
+                            Text("西班牙语 (Español)").tag("es")
+                            Text("俄语 (Русский)").tag("ru")
                         }
                         .pickerStyle(.menu)
                         .controlSize(.small)
@@ -1092,11 +1106,44 @@ public struct MainControlView: View {
                     
                     Divider().opacity(0.3)
                     
+                    HStack {
+                        Text(L10n("pref.ocr.target_input"))
+                            .font(.system(size: 13, weight: .regular))
+                        Spacer()
+                        Picker("", selection: $config.inputTranslateTargetLanguage) {
+                            Text("英语 (English)").tag("en")
+                            Text("中文 (简体)").tag("zh-Hans")
+                            Text("日语 (日本語)").tag("ja")
+                            Text("韩语 (한국어)").tag("ko")
+                            Text("法语 (Français)").tag("fr")
+                            Text("德语 (Deutsch)").tag("de")
+                            Text("西班牙语 (Español)").tag("es")
+                            Text("俄语 (Русский)").tag("ru")
+                        }
+                        .pickerStyle(.menu)
+                        .controlSize(.small)
+                        .onChange(of: config.inputTranslateTargetLanguage) { _ in
+                            config.save()
+                        }
+                    }
+                    
+                    Divider().opacity(0.3)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        toggleRow(title: L10n("pref.ocr.smart_swap"), isOn: $config.smartBiDirectionalSwap)
+                        Text(L10n("pref.ocr.smart_swap_desc"))
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    
+                    Divider().opacity(0.3)
+                    
                     HStack(spacing: 6) {
-                        Image(systemName: "info.circle.fill")
+                        Image(systemName: "sparkles")
                             .foregroundColor(.accentColor)
                             .font(.system(size: 12))
-                        Text(L10n("pref.ocr.smart_tip"))
+                        Text(L10n("pref.ocr.recent_langs_tip"))
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -1155,11 +1202,11 @@ public struct MainControlView: View {
     // MARK: - 7. About Settings View
     
     private var currentVersionString: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
     }
     
     private var currentBuildString: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "4"
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "5"
     }
     
     private var aboutSettingsView: some View {
