@@ -23,32 +23,17 @@
 
 ---
 
-## Feature Previews
-
-### Precision Capture & Tactile Pinning
-
-<p align="center">
-  <a href="docs/videos/capture_and_pin.mp4">
-    <img src="docs/videos/capture_and_pin.gif" alt="Precision Capture & Tactile Pinning Preview" width="100%" />
-  </a>
-</p>
-
-### Safari-Style In-Place Screen Translation
-
-<p align="center">
-  <a href="docs/videos/inplace_translation.mp4">
-    <img src="docs/videos/inplace_translation.gif" alt="Safari-Style In-Place Screen Translation Preview" width="100%" />
-  </a>
-</p>
-
----
-
 ## Interface Overview
 
-| Precision Capture & Grouped Toolbar | Safari-Style In-Place Screen Translation |
+| Precision Capture & Grouped Toolbar | Secondary Palette & Vector Tools |
 | :---: | :---: |
-| <img src="docs/images/annotation_toolbar.png" alt="Precision Viewfinder and Grouped Toolbar" width="460" /> | <img src="docs/images/inplace_translation.png" alt="In-Place Translation" width="460" /> |
-| **Hairline crosshair · Loupe color picker · Comprehensive tools** | **Offline Vision OCR · Contextual overlay · Zero-latency toggle** |
+| <img src="docs/images/annotation_toolbar.png" alt="Precision Viewfinder and Grouped Toolbar" width="460" /> | <img src="docs/images/annotation_toolbar_sub.png" alt="Secondary Palette and Tools" width="460" /> |
+| **Hairline crosshair · Loupe color picker · Core actions** | **Geometric shapes · Step badges · Stroke & font sizing** |
+
+| Safari-Style In-Place Screen Translation | Input Field Translation & Replacement |
+| :---: | :---: |
+| <img src="docs/images/inplace_translation.png" alt="In-Place Translation" width="460" /> | <img src="docs/images/input_Translate.png" alt="Input Field Translation and Replacement" width="460" /> |
+| **On-device Vision OCR · Contextual overlay · Language pairs** | **Focus & translate · Enter to replace · Clipboard preservation** |
 
 | Desktop Floating Pin | Native Preferences & Hotkeys |
 | :---: | :---: |

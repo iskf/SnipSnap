@@ -23,34 +23,20 @@
 
 ---
 
-## 核心功能预览
-
-### 精准取景与极致贴图
-
-<p align="center">
-  <a href="docs/videos/capture_and_pin.mp4">
-    <img src="docs/videos/capture_and_pin.gif" alt="精准取景与极致贴图演示" width="100%" />
-  </a>
-</p>
-
-### Safari 风格原地屏幕翻译
-
-<p align="center">
-  <a href="docs/videos/inplace_translation.mp4">
-    <img src="docs/videos/inplace_translation.gif" alt="Safari 风格原地屏幕翻译演示" width="100%" />
-  </a>
-</p>
-
----
 
 ## 界面一览
 
-| 精准取景与分组式标注工具栏 | Safari 风格原地屏幕翻译 |
+| 精准取景与分组式标注工具栏 | 丰富矢量标注与二级调色盘 |
 | :---: | :---: |
-| <img src="docs/images/annotation_toolbar.png" alt="精准取景与标注工具栏" width="460" /> | <img src="docs/images/inplace_translation.png" alt="原地屏幕翻译" width="460" /> |
-| **发丝级准星 · 放大镜取色 · 完备标注阵列** | **离线 Apple Vision OCR · 视界原地覆盖 · 原文/译文秒切** |
+| <img src="docs/images/annotation_toolbar.png" alt="精准取景与标注工具栏" width="460" /> | <img src="docs/images/annotation_toolbar_sub.png" alt="二级调色盘与标注样式" width="460" /> |
+| **发丝级准星 · 放大镜取色 · 核心操作栏** | **几何图形 · 步骤印章 · 调色与画笔字号** |
 
-| 桌面毛玻璃置顶贴图 | 原生偏好设置与快捷键 |
+| Safari 风格原地屏幕翻译 | 输入框就地翻译与替换 |
+| :---: | :---: |
+| <img src="docs/images/inplace_translation.png" alt="原地屏幕翻译" width="460" /> | <img src="docs/images/input_Translate.png" alt="输入框就地翻译与替换" width="460" /> |
+| **离线 Apple Vision OCR · 原位排版覆盖 · 语言对快切** | **聚焦即刻翻译 · Enter 一键覆写替换 · 剪贴板自动保护** |
+
+| 桌面毛玻璃置顶贴图 | 原生控制中心与快捷键 |
 | :---: | :---: |
 | <img src="docs/images/hero_pin.png" alt="毛玻璃置顶贴图" width="460" /> | <img src="docs/images/control_center.png" alt="原生控制中心" width="460" /> |
 | **独立置顶浮窗 · 无级缩放透明度 · 文本卡片化** | **纯原生 Swift/AppKit 架构 · 全局快捷键录制 · 菜单栏常驻** |
