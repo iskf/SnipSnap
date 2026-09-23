@@ -25,20 +25,20 @@
 
 ## Interface Overview
 
-| Precision Capture & Grouped Toolbar | Secondary Palette & Vector Tools |
+| Precision Viewfinder & Color Loupe | Rich Vector Annotation Arsenal |
 | :---: | :---: |
-| <img src="docs/images/annotation_toolbar.png" alt="Precision Viewfinder and Grouped Toolbar" width="460" /> | <img src="docs/images/annotation_toolbar_sub.png" alt="Secondary Palette and Tools" width="460" /> |
-| **Hairline crosshair · Loupe color picker · Core actions** | **Geometric shapes · Step badges · Stroke & font sizing** |
+| <img src="docs/images/annotation_toolbar.png" alt="Precision Viewfinder and Grouped Toolbar" width="460" /> | <img src="docs/images/annotation_showcase.png" alt="Rich Vector Annotation Arsenal" width="460" /> |
+| **Hairline crosshair · 8x live loupe · Real-time HEX/RGB** | **Geometric shapes · Curved arrows · Highlighters · Mosaic · Step pins** |
 
-| Safari-Style In-Place Screen Translation | Input Field Translation & Replacement |
+| Smart Seamless Scrolling Capture | Safari-Style In-Place Screen Translation |
 | :---: | :---: |
-| <img src="docs/images/inplace_translation.png" alt="In-Place Translation" width="460" /> | <img src="docs/images/input_Translate.png" alt="Input Field Translation and Replacement" width="460" /> |
-| **On-device Vision OCR · Contextual overlay · Language pairs** | **Focus & translate · Enter to replace · Clipboard preservation** |
+| <img src="docs/images/scrolling_capture.png" alt="Seamless Scrolling Capture" width="460" /> | <img src="docs/images/inplace_translation.png" alt="In-Place Translation" width="460" /> |
+| **Auto-stitching on scroll · Compact status capsule · Panorama preview** | **On-device Vision OCR · Contextual overlay · Language pairs · DeepSeek AI** |
 
-| Desktop Floating Pin | Native Preferences & Hotkeys |
+| Input Field Translation & Replacement | Desktop Floating Pin & Tactile Gestures |
 | :---: | :---: |
-| <img src="docs/images/hero_pin.png" alt="Desktop Floating Pin" width="460" /> | <img src="docs/images/control_center.png" alt="Native Preferences" width="460" /> |
-| **Independent NSPanel · Stepless zoom/opacity · Text-to-card** | **Pure Swift/AppKit · Global hotkey recorder · Lightweight resident** |
+| <img src="docs/images/input_translate.png" alt="Input Field Translation and Replacement" width="460" /> | <img src="docs/images/hero_pin.png" alt="Desktop Floating Pin and Gestures" width="460" /> |
+| **Focus & translate · Enter to replace · Preserved clipboard history** | **Independent NSPanel · 10%–800% zoom · ⌘L click-through · Context menu** |
 
 ---
 

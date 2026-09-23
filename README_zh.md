@@ -26,20 +26,20 @@
 
 ## 界面一览
 
-| 精准取景与分组式标注工具栏 | 丰富矢量标注与二级调色盘 |
+| 精准取景与放大镜取色 | 丰富矢量标注实战 |
 | :---: | :---: |
-| <img src="docs/images/annotation_toolbar.png" alt="精准取景与标注工具栏" width="460" /> | <img src="docs/images/annotation_toolbar_sub.png" alt="二级调色盘与标注样式" width="460" /> |
-| **发丝级准星 · 放大镜取色 · 核心操作栏** | **几何图形 · 步骤印章 · 调色与画笔字号** |
+| <img src="docs/images/annotation_toolbar.png" alt="精准取景与放大镜取色" width="460" /> | <img src="docs/images/annotation_showcase.png" alt="丰富矢量标注实战" width="460" /> |
+| **发丝级准星 · 8倍放大镜取色 · 坐标与色值** | **几何图形 · 箭头批注 · 荧光笔 · 马赛克脱敏 · 步骤印章** |
 
-| Safari 风格原地屏幕翻译 | 输入框就地翻译与替换 |
+| 长截图智能无缝拼接 | Safari 风格原地屏幕翻译 |
 | :---: | :---: |
-| <img src="docs/images/inplace_translation.png" alt="原地屏幕翻译" width="460" /> | <img src="docs/images/input_Translate.png" alt="输入框就地翻译与替换" width="460" /> |
-| **离线 Apple Vision OCR · 原位排版覆盖 · 语言对快切** | **聚焦即刻翻译 · Enter 一键覆写替换 · 剪贴板自动保护** |
+| <img src="docs/images/scrolling_capture.png" alt="长截图智能无缝拼接" width="460" /> | <img src="docs/images/inplace_translation.png" alt="Safari 风格原地屏幕翻译" width="460" /> |
+| **框选即滚 · 自动对齐去重 · 全景画卷预览** | **离线 Vision OCR · 原位排版覆盖 · 语言对快切 · AI 大模型** |
 
-| 桌面毛玻璃置顶贴图 | 原生控制中心与快捷键 |
+| 输入框就地翻译与替换 | 桌面置顶贴图与多手势穿透 |
 | :---: | :---: |
-| <img src="docs/images/hero_pin.png" alt="毛玻璃置顶贴图" width="460" /> | <img src="docs/images/control_center.png" alt="原生控制中心" width="460" /> |
-| **独立置顶浮窗 · 无级缩放透明度 · 文本卡片化** | **纯原生 Swift/AppKit 架构 · 全局快捷键录制 · 菜单栏常驻** |
+| <img src="docs/images/input_translate.png" alt="输入框就地翻译与替换" width="460" /> | <img src="docs/images/hero_pin.png" alt="桌面置顶贴图与多手势穿透" width="460" /> |
+| **光标聚焦即译 · Enter 一键覆写替换 · 保护原剪贴板** | **独立置顶浮窗 · 10%–800% 无级缩放 · ⌘L 点击穿透 · 变换菜单** |
 
 ---
 
